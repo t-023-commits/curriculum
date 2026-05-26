@@ -1790,7 +1790,7 @@ function showToast(msg) {
 // 이 트릭은 새 탭 안의 HTML이 직접 HTTP로 이동시키므로 우회 가능.
 function openSignupSite(e) {
   if (e) e.preventDefault();
-  const url = 'http://mycnghs.mycafe24.com/main';
+  const url = 'https://mycnghs.mycafe24.com/main/login/login.php';
   try {
     const w = window.open('about:blank', '_blank');
     if (w) {
@@ -2228,7 +2228,7 @@ function renderT1Result() {
       <span class="signup-info-label">초기 비밀번호</span><span class="signup-info-value">1234</span>
     </div>
     <a class="signup-link-btn"
-       href="http://mycnghs.mycafe24.com/main"
+       href="https://mycnghs.mycafe24.com/main/login/login.php"
        target="_blank"
        rel="opener"
        referrerpolicy="unsafe-url"
@@ -2237,9 +2237,7 @@ function renderT1Result() {
       <span class="signup-link-arrow">↗</span>
     </a>
     <div class="signup-link-fallback">
-      💡 사이트는 <b>HTTP</b>로만 동작합니다. 위 버튼이 빈 화면으로 열리면<br>
-      ① 새 탭의 주소창에서 <b>https://</b>를 <b>http://</b>로 직접 바꿔주세요<br>
-      ② 또는 사이트에 한번 들어간 다음 <b>즐겨찾기에 추가</b>하면 다음부터 빠르게 접속할 수 있어요
+      💡 자주 접속한다면 사이트에 한번 들어간 다음 <b>즐겨찾기에 추가</b>해 두면 편해요.
     </div>
   </div>`;
 
