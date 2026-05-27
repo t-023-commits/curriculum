@@ -1854,7 +1854,8 @@ function openSignupSite(e) {
 
 // ===== Track 01: 과목 선택 인터랙션 =====
 // 2학년에도 편성된 과목 (3학년 선택시 기수강 여부 확인 필요)
-const CROSS_YEAR_SUBJECTS = ['윤리문제 탐구', '기후변화와 지속가능한 세계'];
+// 2025학년도 입학생 편제 기준: 같은 과목이 2학년·3학년 모두 편성된 경우
+const CROSS_YEAR_SUBJECTS = ['윤리문제 탐구', '기후변화와 지속가능한 세계', '경제', '윤리와 사상', '기후변화와 환경생태'];
 
 function resetT1Selections() {
   state.t1Sel = {};
