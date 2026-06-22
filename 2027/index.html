@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>교육과정 예상 시수 점검 (단계별)</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family:'Malgun Gothic','Apple SD Gothic Neo',-apple-system,sans-serif;
+    margin:0; background:#f1f5f9; color:#1f2937; font-size:13px; }
+  header { background:linear-gradient(135deg,#2563eb,#1e40af); color:#fff; padding:16px 24px; display:flex; justify-content:space-between; align-items:center; gap:16px; }
+  .hdr-btn { background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.6); color:#fff; padding:9px 14px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:700; white-space:nowrap; }
+  .hdr-btn:hover { background:rgba(255,255,255,.28); }
+  .hdr-btn.active { background:#fff; color:#1e40af; }
+  .vfilter { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:12px; }
+  .vfilter .lbl { font-size:12px; font-weight:700; color:#475569; margin-right:2px; }
+  .vchip { padding:4px 11px; border:1.5px solid #cbd5e1; background:#fff; color:#64748b; border-radius:14px; cursor:pointer; font-size:12px; font-weight:600; }
+  .vchip:hover { border-color:#93c5fd; }
+  .vchip.on { border-color:#2563eb; background:#2563eb; color:#fff; }
+  header h1 { margin:0; font-size:20px; }
+  header p { margin:4px 0 0; font-size:12px; opacity:.9; }
+
+  /* Stepper */
+  .stepper { display:flex; gap:8px; padding:16px 24px; background:#fff; border-bottom:1px solid #e5e7eb; flex-wrap:wrap; }
+  .step-chip { flex:1; min-width:150px; display:flex; align-items:center; gap:10px; padding:12px 14px;
+    border:2px solid #e5e7eb; border-radius:10px; background:#fff; cursor:pointer; transition:.15s; }
+  .step-chip:hover { border-color:#93c5fd; }
+  .step-chip.active { border-color:#2563eb; background:#eff6ff; box-shadow:0 2px 6px rgba(37,99,235,.15); }
+  .step-chip.done .step-num { background:#16a34a; }
+  .step-num { width:30px; height:30px; border-radius:50%; background:#94a3b8; color:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0; }
+  .step-chip.active .step-num { background:#2563eb; }
+  .step-txt b { display:block; font-size:13px; }
+  .step-txt span { font-size:11px; color:#6b7280; }
+
+  main { padding:20px 24px 60px; max-width:1500px; margin:0 auto; }
+  .panel { display:none; }
+  .panel.active { display:block; }
+
+  .intro { background:#fff; border:1px solid #e5e7eb; border-left:4px solid #2563eb; border-radius:8px;
+    padding:14px 16px; margin-bottom:16px; line-height:1.7; }
+  .intro b { color:#1e40af; }
+
+  .group-card, .grade-card { background:#fff; border:1px solid #e5e7eb; border-radius:10px;
+    margin-bottom:14px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+  .card-head { display:flex; justify-content:space-between; align-items:center;
+    padding:10px 14px; background:#f8fafc; border-bottom:1px solid #e5e7eb; }
+  .card-head h3 { margin:0; font-size:15px; }
+  .card-head .sub { font-size:11px; color:#6b7280; font-weight:400; margin-left:8px; }
+
+  table { width:100%; border-collapse:collapse; }
+  th { background:#f3f4f6; padding:8px 6px; font-size:11px; color:#374151; border-bottom:2px solid #e5e7eb; }
+  td { padding:5px 6px; border-bottom:1px solid #f1f5f9; font-size:12px; text-align:center; vertical-align:middle; }
+  td.left { text-align:left; }
+  tr.excluded { opacity:.4; background:#fafafa; }
+  tr:hover td { background:#f9fafb; }
+
+  .badge { display:inline-block; padding:1px 7px; border-radius:10px; font-size:10px; font-weight:600; }
+  .badge.공통 { background:#dbeafe; color:#1e40af; }
+  .badge.일반 { background:#d1fae5; color:#065f46; }
+  .badge.진로 { background:#fef3c7; color:#92400e; }
+  .badge.융합 { background:#fce7f3; color:#9f1239; }
+  .req { font-size:10px; color:#6b7280; }
+  .choice-num { font-variant-numeric:tabular-nums; font-weight:600; color:#2563eb; }
+  .choice-num.est { color:#9ca3af; font-weight:500; }
+
+  input[type=number] { width:56px; padding:4px; border:1px solid #d1d5db; border-radius:4px; text-align:center; font-size:12px; }
+  input[type=number]:focus { border-color:#2563eb; outline:none; }
+  .week { font-weight:700; color:#1e40af; font-variant-numeric:tabular-nums; }
+
+  button { font-family:inherit; }
+  .btn { padding:6px 12px; border-radius:6px; border:1px solid #2563eb; background:#2563eb; color:#fff; cursor:pointer; font-size:12px; }
+  .btn:hover { background:#1e40af; }
+  .btn.ghost { background:#fff; color:#2563eb; }
+  .btn.ghost:hover { background:#eff6ff; }
+  .btn.green { border-color:#16a34a; background:#16a34a; }
+  .btn.green:hover { background:#15803d; }
+  .btn.sm { padding:3px 9px; font-size:11px; }
+  .btn-del { padding:3px 8px; border:1px solid #dc2626; background:#fff; color:#dc2626; border-radius:4px; cursor:pointer; font-size:11px; }
+  .btn-del:hover { background:#fef2f2; }
+
+  .divbar { display:flex; align-items:center; gap:8px; background:#fffbeb; border:1px solid #fde68a;
+    border-radius:8px; padding:8px 12px; margin-bottom:14px; font-size:12px; }
+  .divbar b { color:#92400e; }
+
+  .base-chip { border-color:#c4b5fd; background:#faf5ff; }
+  .base-chip.active { border-color:#7c3aed; background:#f3e8ff; box-shadow:0 2px 6px rgba(124,58,237,.18); }
+  .base-chip .step-num { background:#7c3aed; font-size:16px; }
+  .curri-edit { width:100%; border-collapse:collapse; }
+  .curri-edit th { background:#f3f4f6; padding:6px; font-size:11px; border-bottom:2px solid #e5e7eb; white-space:nowrap; }
+  .curri-edit td { padding:3px 5px; border-bottom:1px solid #f1f5f9; text-align:center; font-size:12px; white-space:nowrap; }
+  .curri-edit select, .curri-edit input[type=text] { padding:3px; border:1px solid #d1d5db; border-radius:4px; font-size:12px; }
+  .curri-edit input[type=number] { width:50px; }
+  /* 1단계 교과군 타일 */
+  .bulk-row { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
+  .bulk-row .hint { color:#6b7280; font-size:11px; margin-left:4px; }
+  .tile-cnt { position:absolute; top:9px; left:12px; font-size:11px; color:#94a3b8; font-weight:700; }
+  .tile.on .tile-cnt { color:#60a5fa; }
+  .tile-view { position:absolute; bottom:10px; left:50%; transform:translateX(-50%); padding:3px 12px;
+    border:1px solid #cbd5e1; background:#fff; color:#475569; border-radius:12px; font-size:11px; cursor:pointer; }
+  .tile-view:hover { border-color:#2563eb; color:#2563eb; background:#eff6ff; }
+  .vg-head { font-weight:800; color:#1e40af; margin:12px 0 4px; border-bottom:1px solid #e5e7eb; padding-bottom:3px; }
+  .vg-req { font-size:11px; color:#92400e; background:#fffbeb; border:1px solid #fde68a; display:inline-block; padding:1px 9px; border-radius:8px; margin:7px 0 3px; }
+  .vg-list { margin:0 0 4px; padding-left:18px; }
+  .vg-list li { font-size:12px; padding:2px 0; }
+
+  .tile-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:14px; margin-bottom:12px; }
+  .tile { position:relative; aspect-ratio:1/1; border:2px solid #e5e7eb; border-radius:16px; background:#fff;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; transition:.15s; user-select:none; }
+  .tile:hover { border-color:#93c5fd; transform:translateY(-2px); }
+  .tile.on { border-color:#2563eb; background:#eff6ff; box-shadow:0 4px 12px rgba(37,99,235,.18); }
+  .tile-name { font-size:17px; font-weight:800; color:#475569; text-align:center; padding:0 10px; line-height:1.25; word-break:keep-all; }
+  .tile.on .tile-name { color:#1e40af; }
+  .tile-check { position:absolute; top:9px; right:11px; width:24px; height:24px; border-radius:50%;
+    background:#2563eb; color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; opacity:0; }
+  .tile.on .tile-check { opacity:1; }
+
+  .tch-edit { background:#fffbeb; border:2px solid #fbbf24; border-radius:10px; padding:10px 14px; margin-top:16px; }
+  .tch-edit summary { cursor:pointer; font-weight:800; color:#92400e; font-size:13px; }
+  .tch-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:8px; margin-top:10px; }
+  .tch-grid label { font-size:11px; color:#475569; display:flex; align-items:center; justify-content:space-between; gap:6px;
+    background:#f8fafc; border:1px solid #e5e7eb; border-radius:6px; padding:4px 8px; }
+  .tch-grid input { width:54px; padding:3px; border:1px solid #d1d5db; border-radius:4px; text-align:center; }
+  .summary { background:#fff; border:2px solid #2563eb; border-radius:10px; padding:14px 16px; margin-top:18px; }
+  .summary h3 { margin:0 0 10px; font-size:15px; color:#1e40af; }
+  .summary table td, .summary table th { text-align:center; }
+  .summary .grand { font-size:22px; font-weight:800; color:#1e40af; }
+  .sem-tag { display:inline-block; background:#eff6ff; color:#1e40af; border-radius:6px; padding:2px 10px; font-size:12px; font-weight:700; margin:10px 0 6px; }
+
+  .nav-row { display:flex; justify-content:space-between; margin-top:24px; }
+
+  /* modal */
+  .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:100; align-items:center; justify-content:center; }
+  .modal-bg.open { display:flex; }
+  .modal { background:#fff; border-radius:12px; padding:20px 22px; width:420px; max-width:92vw; box-shadow:0 12px 40px rgba(0,0,0,.25); }
+  .modal h3 { margin:0 0 14px; font-size:16px; }
+  .modal label { display:block; font-size:11px; font-weight:700; color:#374151; margin:8px 0 3px; }
+  .modal input, .modal select { width:100%; padding:7px 8px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; }
+  .modal .row2 { display:flex; gap:10px; }
+  .modal .row2 > div { flex:1; }
+  .modal .acts { display:flex; justify-content:flex-end; gap:8px; margin-top:16px; }
+
+  .reset-link { color:#dc2626; font-size:11px; cursor:pointer; text-decoration:underline; margin-left:auto; }
+  /* 가로형 총괄표 */
+  .sumwide { width:100%; border-collapse:collapse; }
+  .sumwide th { padding:6px 8px; font-size:11px; border:1px solid #e5e7eb; background:#f3f4f6; }
+  .sumwide td { padding:5px 8px; font-size:12px; text-align:center; border:1px solid #f1f5f9; white-space:nowrap; }
+  .sumwide td.left { text-align:left; font-weight:600; }
+  .sumwide th.s1 { background:#dbeafe; color:#1e40af; }
+  .sumwide td.s1 { background:#eff6ff; }
+  .sumwide th.s2 { background:#dcfce7; color:#166534; }
+  .sumwide td.s2 { background:#f0fdf4; }
+  .sumwide tr.totrow td { background:#f8fafc; font-weight:800; border-top:2px solid #cbd5e1; }
+  .sumwide th.comb { background:#ede9fe; color:#5b21b6; }
+  .sumwide td.comb { background:#f5f3ff; }
+  /* 연도 카드 */
+  .yr-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:16px; }
+  .yr-card { background:#fff; border:2px solid #2563eb; border-radius:12px; padding:14px; text-align:center; }
+  .yr-l { font-size:12px; color:#6b7280; font-weight:700; }
+  .yr-v { font-size:30px; font-weight:800; color:#1e40af; }
+  .yr-s { font-size:11px; color:#9ca3af; }
+  .hdr-btns { display:flex; gap:8px; }
+  .selgrp { cursor:help; border-bottom:1px dashed #f59e0b; }
+  .selgrp:hover { color:#92400e; }
+  #wizTip { display:none; position:fixed; z-index:9999; background:#1f2937; color:#f9fafb; padding:10px 14px;
+    border-radius:8px; font-size:11px; min-width:230px; max-width:380px; box-shadow:0 6px 20px rgba(0,0,0,.3); line-height:1.55; pointer-events:none; }
+  #wizTip .tip-title { display:block; font-weight:700; color:#fbbf24; margin-bottom:6px; padding-bottom:4px; border-bottom:1px solid #374151; }
+  #wizTip .tip-row { display:flex; justify-content:space-between; gap:12px; padding:2px 0; }
+  #wizTip .tip-row .grp { color:#93c5fd; font-weight:600; margin-right:3px; }
+  #wizTip .tip-row .hrs { color:#9ca3af; white-space:nowrap; }
+
+  @media print {
+    @page { size: A4; margin: 11mm; }
+    * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+    body { background:#fff !important; font-size:11px; }
+    .stepper, .hdr-btns, .nav-row, .vfilter, .divbar, .tch-edit, .reset-link, .bulk-row, #wizTip { display:none !important; }
+    button, .btn, .btn-del, .tile-view { display:none !important; }
+    .panel { display:none !important; }
+    .panel.active { display:block !important; }
+    main { padding:0 !important; max-width:none !important; }
+    header { padding:10px 0 14px !important; background:#fff !important; color:#1e3a8a !important; }
+    header h1 { color:#1e3a8a !important; font-size:17px; }
+    header p { color:#475569 !important; }
+    .intro { border:1px solid #cbd5e1 !important; }
+    .group-card, .grade-card, .summary, .yr-card { box-shadow:none !important; break-inside:avoid; page-break-inside:avoid; }
+    tr { page-break-inside:avoid; }
+    input, select { border:none !important; background:transparent !important; -webkit-appearance:none; appearance:none; color:#000 !important; padding:0 !important; text-align:center; }
+    .sumwide, .curri-edit, .grade-card table { font-size:9.5px; }
+    .sumwide td, .sumwide th, .curri-edit td, .curri-edit th { white-space:normal !important; padding:3px 4px !important; }
+  }
+</style>
+</head>
+<body>
+<div id="pwgate" style="position:fixed;inset:0;background:#1e293b;z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;">
+  <div style="font-size:34px;margin-bottom:6px;">🔒</div>
+  <div style="font-size:18px;font-weight:700;margin-bottom:16px;">비밀번호를 입력하세요</div>
+  <input id="pwInput" type="password" placeholder="비밀번호" style="padding:11px 12px;border-radius:8px;border:none;font-size:15px;width:230px;text-align:center;">
+  <button id="pwBtn" style="margin-top:12px;padding:9px 22px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-size:14px;font-weight:700;cursor:pointer;">입력</button>
+  <div id="pwErr" style="color:#fca5a5;font-size:12px;margin-top:10px;height:14px;"></div>
+</div>
+<script>
+(function(){
+  var PW="cnghs2027";
+  function tryPw(){
+    if(document.getElementById("pwInput").value===PW){ var g=document.getElementById("pwgate"); if(g) g.remove(); }
+    else { document.getElementById("pwErr").textContent="비밀번호가 틀렸습니다."; document.getElementById("pwInput").value=""; }
+  }
+  document.getElementById("pwBtn").addEventListener("click",tryPw);
+  document.getElementById("pwInput").addEventListener("keydown",function(e){ if(e.key==="Enter") tryPw(); });
+  document.getElementById("pwInput").focus();
+})();
+</script>
+<header>
+  <div>
+    <h1>📚 교육과정 예상 시수 점검 시스템</h1>
+    <p>단계별로 과목을 선택하고, 2027 · 2028 · 2029학년도의 예상 개설반과 시수를 확인합니다. 실제 선택 인원(2026.6.16. 기준)이 반영되어 있습니다.</p>
+  </div>
+  <div class="hdr-btns">
+    <button id="baseBtn" class="hdr-btn">📋 2027 입학생 편제표</button>
+    <button id="exportBtn" class="hdr-btn">💾 내보내기</button>
+    <button id="importBtn" class="hdr-btn">📂 불러오기</button>
+    <button id="pdfBtn" class="hdr-btn">📄 PDF로 저장</button>
+    <input type="file" id="importFile" accept=".json,application/json" style="display:none">
+  </div>
+</header>
+
+<div class="stepper" id="stepper">
+  <div class="step-chip" data-step="1"><div class="step-num">1</div><div class="step-txt"><b>과목 선택</b><span>교과군별 개설 과목 정하기</span></div></div>
+  <div class="step-chip" data-step="2"><div class="step-num">2</div><div class="step-txt"><b>2027학년도</b><span>1·2·3학년 예상 시수</span></div></div>
+  <div class="step-chip" data-step="3"><div class="step-num">3</div><div class="step-txt"><b>2028학년도</b><span>예상 시수 확인</span></div></div>
+  <div class="step-chip" data-step="4"><div class="step-num">4</div><div class="step-txt"><b>2029학년도</b><span>예상 시수 확인</span></div></div>
+  <div class="step-chip" data-step="5"><div class="step-num">5</div><div class="step-txt"><b>연도별 변화</b><span>한눈에 비교</span></div></div>
+</div>
+
+<main>
+  <div class="panel" id="panel-base"></div>
+  <div class="panel" id="panel-1"></div>
+  <div class="panel" id="panel-2"></div>
+  <div class="panel" id="panel-3"></div>
+  <div class="panel" id="panel-4"></div>
+  <div class="panel" id="panel-5"></div>
+</main>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3 id="modalTitle">과목 추가</h3>
+    <label>교과군</label>
+    <select id="mGroup"></select>
+    <label>과목명</label>
+    <input type="text" id="mName" placeholder="예: 미적분Ⅱ">
+    <div class="row2">
+      <div><label>학년</label><select id="mGrade"><option>1</option><option>2</option><option>3</option></select></div>
+      <div><label>학기</label><select id="mSem"><option>1</option><option>2</option></select></div>
+    </div>
+    <div class="row2">
+      <div><label>과목유형</label><select id="mType"><option>공통 과목</option><option>일반 선택</option><option>진로 선택</option><option>융합 선택</option></select></div>
+      <div><label>이수구분</label><input type="text" id="mReq" value="선택군 택1"></div>
+    </div>
+    <div class="row2">
+      <div><label>주당시수</label><input type="number" id="mHours" value="3" min="0"></div>
+      <div><label>개설반</label><input type="number" id="mClasses" value="1" min="0"></div>
+    </div>
+    <div class="acts">
+      <button class="btn ghost" id="mCancel">취소</button>
+      <button class="btn green" id="mConfirm">추가</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="viewBg">
+  <div class="modal" style="width:480px">
+    <h3 id="viewTitle">과목 목록</h3>
+    <div id="viewBody" style="max-height:60vh; overflow:auto"></div>
+    <div class="acts"><button class="btn" id="viewClose">닫기</button></div>
+  </div>
+</div>
+
+<div id="wizTip"></div>
+
+<script>
+const BASE_DATA = [
+  // 2025학년도 입학생 - 지정과목
+  ["2025","국어","공통국어1","공통 과목","지정",1,1,4,13],
+  ["2025","국어","공통국어2","공통 과목","지정",1,2,3,13],
+  ["2025","국어","문학","일반 선택","지정",2,1,4,13],
+  ["2025","국어","독서와 작문","일반 선택","지정",2,2,4,13],
+  ["2025","국어","화법과 언어","일반 선택","지정",3,1,3,13],
+  ["2025","수학","공통수학1","공통 과목","지정",1,1,3,13],
+  ["2025","수학","공통수학2","공통 과목","지정",1,2,3,13],
+  ["2025","수학","대수","일반 선택","지정",2,1,4,13],
+  ["2025","수학","미적분Ⅰ","일반 선택","지정",2,2,4,13],
+  ["2025","수학","확률과 통계","일반 선택","지정",3,1,3,13],
+  ["2025","영어","공통영어1","공통 과목","지정",1,1,3,13],
+  ["2025","영어","공통영어2","공통 과목","지정",1,2,4,13],
+  ["2025","영어","영어Ⅰ","일반 선택","지정",2,1,4,13],
+  ["2025","영어","영어Ⅱ","일반 선택","지정",2,2,4,13],
+  ["2025","영어","영어 독해와 작문","일반 선택","지정",3,1,3,13],
+  ["2025","사회","한국사1","공통 과목","지정",1,1,3,13],
+  ["2025","사회","한국사2","공통 과목","지정",1,2,3,13],
+  ["2025","사회","통합사회1","공통 과목","지정",1,1,4,13],
+  ["2025","사회","통합사회2","공통 과목","지정",1,2,4,13],
+  ["2025","과학","통합과학1","공통 과목","지정",1,1,4,13],
+  ["2025","과학","통합과학2","공통 과목","지정",1,2,4,13],
+  ["2025","과학","과학탐구실험1","공통 과목","지정",1,1,1,13],
+  ["2025","과학","과학탐구실험2","공통 과목","지정",1,2,1,13],
+  ["2025","체육","체육1","일반 선택","지정",1,1,2,13],
+  ["2025","체육","체육2","일반 선택","지정",1,2,2,13],
+  ["2025","체육","스포츠 생활1","융합 선택","지정",2,1,2,13],
+  ["2025","체육","스포츠 생활2","융합 선택","지정",2,2,2,13],
+  ["2025","체육","스포츠 문화","진로 선택","지정",3,1,1,13],
+  ["2025","체육","스포츠 과학","진로 선택","지정",3,2,1,13],
+  ["2025","예술(음악)","음악","일반 선택","지정",1,1,2,6],
+  ["2025","예술(음악)","음악","일반 선택","지정",1,2,2,7],
+  ["2025","예술(미술)","미술","일반 선택","지정",1,1,2,7],
+  ["2025","예술(미술)","미술","일반 선택","지정",1,2,2,6],
+  ["2025","예술(음악)","음악 연주와 창작","진로 선택","지정",2,1,3,7],
+  ["2025","예술(음악)","음악 연주와 창작","진로 선택","지정",2,2,3,6],
+  ["2025","예술(미술)","미술 창작","진로 선택","지정",2,1,3,6],
+  ["2025","예술(미술)","미술 창작","진로 선택","지정",2,2,3,7],
+  ["2025","기술·가정/정보","정보","일반 선택","지정",1,1,3,6],
+  ["2025","기술·가정/정보","정보","일반 선택","지정",1,2,3,7],
+  ["2025","한문","한문","일반 선택","지정",1,1,3,7],
+  ["2025","한문","한문","일반 선택","지정",1,2,3,6],
+  // 2025 선택군A 택3 (2-1)
+  ["2025","수학","인공지능 수학","진로 선택","선택군A 택3",2,1,3,6],
+  ["2025","사회","세계시민과 지리","일반 선택","선택군A 택3",2,1,3,2],
+  ["2025","사회","세계사","일반 선택","선택군A 택3",2,1,3,2],
+  ["2025","사회","사회와 문화","일반 선택","선택군A 택3",2,1,3,5],
+  ["2025","사회","현대사회와 윤리","일반 선택","선택군A 택3",2,1,3,4],
+  ["2025","사회","법과 사회","진로 선택","선택군A 택3",2,1,3,3],
+  ["2025","과학","물리학","일반 선택","선택군A 택3",2,1,3,6],
+  ["2025","과학","생명과학","일반 선택","선택군A 택3",2,1,3,8],
+  ["2025","과학","기후변화와 환경생태","융합 선택","선택군A 택3",2,1,3,0],
+  // 2025 선택군B 택1 (2-1)
+  ["2025","제2외국어(일본어)","일본어","일반 선택","선택군B 택1",2,1,3,7],
+  ["2025","제2외국어(중국어)","중국어","일반 선택","선택군B 택1",2,1,3,4],
+  // 2025 선택군C 택3 (2-2)
+  ["2025","수학","기하","진로 선택","선택군C 택3",2,2,3,6],
+  ["2025","수학","경제 수학","진로 선택","선택군C 택3",2,2,3,0],
+  ["2025","사회","한국지리 탐구","진로 선택","선택군C 택3",2,2,3,2],
+  ["2025","사회","윤리와 사상","진로 선택","선택군C 택3",2,2,3,4],
+  ["2025","사회","정치","진로 선택","선택군C 택3",2,2,3,3],
+  ["2025","사회","경제","진로 선택","선택군C 택3",2,2,3,3],
+  ["2025","사회","동아시아 역사 기행","진로 선택","선택군C 택3",2,2,3,2],
+  ["2025","사회","윤리문제 탐구","융합 선택","선택군C 택3",2,2,3,2],
+  ["2025","사회","기후변화와 지속가능한 세계","융합 선택","선택군C 택3",2,2,3,1],
+  ["2025","과학","화학","일반 선택","선택군C 택3",2,2,3,6],
+  ["2025","과학","지구과학","일반 선택","선택군C 택3",2,2,3,7],
+  // 2025 선택군D 택1 (2-2)
+  ["2025","제2외국어(일본어)","일본 문화","융합 선택","선택군D 택1",2,2,3,7],
+  ["2025","제2외국어(중국어)","중국 문화","융합 선택","선택군D 택1",2,2,3,4],
+  // 2025 선택군E 택1 (3-1)
+  ["2025","국어","문학과 영상","진로 선택","선택군E 택1",3,1,3,4],
+  ["2025","수학","미적분Ⅱ","진로 선택","선택군E 택1",3,1,3,6],
+  ["2025","영어","심화 영어","진로 선택","선택군E 택1",3,1,3,3],
+  // 2025 선택군F 택4 (3-1)
+  ["2025","사회","도시의 미래 탐구","진로 선택","선택군F 택4",3,1,3,2],
+  ["2025","사회","경제","진로 선택","선택군F 택4",3,1,3,3],
+  ["2025","사회","윤리와 사상","진로 선택","선택군F 택4",3,1,3,3],
+  ["2025","사회","인문학과 윤리","진로 선택","선택군F 택4",3,1,3,3],
+  ["2025","사회","국제 관계의 이해","진로 선택","선택군F 택4",3,1,3,3],
+  ["2025","사회","여행지리","융합 선택","선택군F 택4",3,1,3,1],
+  ["2025","사회","역사로 탐구하는 현대 세계","융합 선택","선택군F 택4",3,1,3,1],
+  ["2025","사회","사회문제 탐구","융합 선택","선택군F 택4",3,1,3,2],
+  ["2025","사회","금융과 경제생활","융합 선택","선택군F 택4",3,1,3,1],
+  ["2025","사회","윤리문제 탐구","융합 선택","선택군F 택4",3,1,3,2],
+  ["2025","사회","기후변화와 지속가능한 세계","융합 선택","선택군F 택4",3,1,3,1],
+  ["2025","과학","역학과 에너지","진로 선택","선택군F 택4",3,1,3,2],
+  ["2025","과학","전자기와 양자","진로 선택","선택군F 택4",3,1,3,2],
+  ["2025","과학","물질과 에너지","진로 선택","선택군F 택4",3,1,3,5],
+  ["2025","과학","화학 반응의 세계","진로 선택","선택군F 택4",3,1,3,5],
+  ["2025","과학","세포와 물질대사","진로 선택","선택군F 택4",3,1,3,5],
+  ["2025","과학","생물의 유전","진로 선택","선택군F 택4",3,1,3,5],
+  ["2025","과학","지구시스템과학","진로 선택","선택군F 택4",3,1,3,3],
+  ["2025","과학","행성우주과학","진로 선택","선택군F 택4",3,1,3,3],
+  // 2025 선택군G 택1 (3-1)
+  ["2025","기술·가정/정보","인공지능 기초","진로 선택","선택군G 택1",3,1,4,3],
+  ["2025","제2외국어(일본어)","일본어 회화","진로 선택","선택군G 택1",3,1,4,5],
+  ["2025","제2외국어(중국어)","중국어 회화","진로 선택","선택군G 택1",3,1,4,3],
+  ["2025","한문","언어생활과 한자","융합 선택","선택군G 택1",3,1,4,2],
+  ["2025","교양","생태와 환경","일반 선택","선택군G 택1",3,1,4,0],
+  ["2025","교양","논리와 사고","진로 선택","선택군G 택1",3,1,4,0],
+  // 2025 선택군H 택4 (3-2)
+  ["2025","국어","주제 탐구 독서","진로 선택","선택군H 택4",3,2,3,13],
+  ["2025","국어","언어생활 탐구","융합 선택","선택군H 택4",3,2,3,6],
+  ["2025","수학","실용 통계","융합 선택","선택군H 택4",3,2,3,3],
+  ["2025","수학","수학과제 탐구","융합 선택","선택군H 택4",3,2,3,13],
+  ["2025","영어","심화 영어 독해와 작문","진로 선택","선택군H 택4",3,2,3,13],
+  ["2025","영어","미디어 영어","융합 선택","선택군H 택4",3,2,3,4],
+  // 2025 선택군I 택4 (3-2)
+  ["2025","사회","인문학과 윤리","진로 선택","선택군I 택4",3,2,3,6],
+  ["2025","사회","여행지리","융합 선택","선택군I 택4",3,2,3,6],
+  ["2025","사회","사회문제 탐구","융합 선택","선택군I 택4",3,2,3,7],
+  ["2025","사회","금융과 경제생활","융합 선택","선택군I 택4",3,2,3,5],
+  ["2025","과학","전자기와 양자","진로 선택","선택군I 택4",3,2,3,2],
+  ["2025","과학","물질과 에너지","진로 선택","선택군I 택4",3,2,3,2],
+  ["2025","과학","세포와 물질대사","진로 선택","선택군I 택4",3,2,3,2],
+  ["2025","과학","지구시스템과학","진로 선택","선택군I 택4",3,2,3,2],
+  ["2025","과학","기후변화와 환경생태","융합 선택","선택군I 택4",3,2,3,8],
+  ["2025","과학","과학의 역사와 문화","융합 선택","선택군I 택4",3,2,3,5],
+  ["2025","과학","융합과학 탐구","융합 선택","선택군I 택4",3,2,3,7],
+  // 2025 선택군J 택1 (3-2)
+  ["2025","기술·가정/정보","소프트웨어와 생활","융합 선택","선택군J 택1",3,2,4,3],
+  ["2025","제2외국어(일본어)","심화 일본어","진로 선택","선택군J 택1",3,2,4,5],
+  ["2025","제2외국어(중국어)","심화 중국어","진로 선택","선택군J 택1",3,2,4,3],
+  ["2025","한문","한문 고전 읽기","진로 선택","선택군J 택1",3,2,4,2],
+  ["2025","교양","인간과 심리","진로 선택","선택군J 택1",3,2,4,0],
+  ["2025","교양","논술","융합 선택","선택군J 택1",3,2,4,0],
+
+  // ============ 2026학년도 입학생 ============
+  // 지정과목
+  ["2026","국어","공통국어1","공통 과목","지정",1,1,4,13],
+  ["2026","국어","공통국어2","공통 과목","지정",1,2,3,13],
+  ["2026","국어","문학","일반 선택","지정",2,1,4,13],
+  ["2026","국어","화법과 언어","일반 선택","지정",2,2,4,13],
+  ["2026","국어","독서와 작문","일반 선택","지정",3,1,3,13],
+  ["2026","수학","공통수학1","공통 과목","지정",1,1,3,13],
+  ["2026","수학","공통수학2","공통 과목","지정",1,2,3,13],
+  ["2026","수학","대수","일반 선택","지정",2,1,4,13],
+  ["2026","수학","미적분Ⅰ","일반 선택","지정",2,2,4,13],
+  ["2026","수학","확률과 통계","일반 선택","지정",2,2,3,13],
+  ["2026","영어","공통영어1","공통 과목","지정",1,1,3,13],
+  ["2026","영어","공통영어2","공통 과목","지정",1,2,4,13],
+  ["2026","영어","영어Ⅰ","일반 선택","지정",2,1,4,13],
+  ["2026","영어","영어Ⅱ","일반 선택","지정",2,2,4,13],
+  ["2026","영어","영어 독해와 작문","일반 선택","지정",3,1,3,13],
+  ["2026","사회","한국사1","공통 과목","지정",1,1,3,13],
+  ["2026","사회","한국사2","공통 과목","지정",1,2,3,13],
+  ["2026","사회","통합사회1","공통 과목","지정",1,1,4,13],
+  ["2026","사회","통합사회2","공통 과목","지정",1,2,4,13],
+  ["2026","과학","통합과학1","공통 과목","지정",1,1,4,13],
+  ["2026","과학","통합과학2","공통 과목","지정",1,2,4,13],
+  ["2026","과학","과학탐구실험1","공통 과목","지정",1,1,1,13],
+  ["2026","과학","과학탐구실험2","공통 과목","지정",1,2,1,13],
+  ["2026","체육","체육1","일반 선택","지정",1,1,2,13],
+  ["2026","체육","체육2","일반 선택","지정",1,2,2,13],
+  ["2026","체육","스포츠 생활1","융합 선택","지정",2,1,2,13],
+  ["2026","체육","스포츠 생활2","융합 선택","지정",2,2,2,13],
+  ["2026","체육","스포츠 문화","진로 선택","지정",3,1,1,13],
+  ["2026","체육","스포츠 과학","진로 선택","지정",3,2,1,13],
+  ["2026","예술(음악)","음악","일반 선택","지정",1,1,2,6],
+  ["2026","예술(음악)","음악","일반 선택","지정",1,2,2,7],
+  ["2026","예술(미술)","미술","일반 선택","지정",1,1,2,7],
+  ["2026","예술(미술)","미술","일반 선택","지정",1,2,2,6],
+  ["2026","예술(음악)","음악 연주와 창작","진로 선택","지정",3,1,3,7],
+  ["2026","예술(음악)","음악 연주와 창작","진로 선택","지정",3,2,3,6],
+  ["2026","예술(미술)","미술 창작","진로 선택","지정",3,1,3,6],
+  ["2026","예술(미술)","미술 창작","진로 선택","지정",3,2,3,7],
+  ["2026","기술·가정/정보","정보","일반 선택","지정",1,1,3,6],
+  ["2026","기술·가정/정보","정보","일반 선택","지정",1,2,3,7],
+  ["2026","한문","한문","일반 선택","지정",1,1,3,7],
+  ["2026","한문","한문","일반 선택","지정",1,2,3,6],
+  // 2026 선택군A 택1 (2-1)
+  ["2026","국어","주제 탐구 독서","진로 선택","선택군A 택1",2,1,3,3],
+  ["2026","수학","기하","진로 선택","선택군A 택1",2,1,3,6],
+  ["2026","영어","영어 발표와 토론","진로 선택","선택군A 택1",2,1,3,4],
+  // 2026 선택군B 택3 (2-1)
+  ["2026","사회","세계시민과 지리","일반 선택","선택군B 택3",2,1,3,3],
+  ["2026","사회","세계사","일반 선택","선택군B 택3",2,1,3,3],
+  ["2026","사회","사회와 문화","일반 선택","선택군B 택3",2,1,3,7],
+  ["2026","사회","현대사회와 윤리","일반 선택","선택군B 택3",2,1,3,5],
+  ["2026","과학","물리학","일반 선택","선택군B 택3",2,1,3,6],
+  ["2026","과학","지구과학","일반 선택","선택군B 택3",2,1,3,7],
+  ["2026","과학","화학","일반 선택","선택군B 택3",2,1,3,8],
+  // 2026 선택군C 택1 (2-1)
+  ["2026","제2외국어(일본어)","일본어","일반 선택","선택군C 택1",2,1,3,7],
+  ["2026","제2외국어(중국어)","중국어","일반 선택","선택군C 택1",2,1,3,4],
+  // 2026 선택군D 택3 (2-2)
+  ["2026","사회","한국지리 탐구","진로 선택","선택군D 택3",2,2,3,3],
+  ["2026","사회","윤리와 사상","진로 선택","선택군D 택3",2,2,3,5],
+  ["2026","사회","법과 사회","진로 선택","선택군D 택3",2,2,3,6],
+  ["2026","사회","정치","진로 선택","선택군D 택3",2,2,3,3],
+  ["2026","사회","동아시아 역사 기행","진로 선택","선택군D 택3",2,2,3,3],
+  ["2026","과학","생명과학","일반 선택","선택군D 택3",2,2,3,8],
+  ["2026","과학","역학과 에너지","진로 선택","선택군D 택3",2,2,3,4],
+  ["2026","과학","생물의 유전","진로 선택","선택군D 택3",2,2,3,4],
+  ["2026","과학","행성우주과학","진로 선택","선택군D 택3",2,2,3,3],
+  // 2026 선택군E 택1 (2-2)
+  ["2026","제2외국어(일본어)","일본 문화","융합 선택","선택군E 택1",2,2,3,7],
+  ["2026","제2외국어(중국어)","중국 문화","융합 선택","선택군E 택1",2,2,3,4],
+  // 2026 선택군F 택1 (3-1)
+  ["2026","국어","문학과 영상","진로 선택","선택군F 택1",3,1,3,3],
+  ["2026","수학","미적분Ⅱ","진로 선택","선택군F 택1",3,1,3,6],
+  ["2026","수학","경제 수학","진로 선택","선택군F 택1",3,1,3,1],
+  ["2026","영어","심화 영어","진로 선택","선택군F 택1",3,1,3,3],
+  // 2026 선택군G 택4 (3-1)
+  ["2026","수학","인공지능 수학","진로 선택","선택군G 택4",3,1,3,1],
+  ["2026","사회","도시의 미래 탐구","진로 선택","선택군G 택4",3,1,3,1],
+  ["2026","사회","경제","진로 선택","선택군G 택4",3,1,3,2],
+  ["2026","사회","인문학과 윤리","진로 선택","선택군G 택4",3,1,3,5],
+  ["2026","사회","국제 관계의 이해","진로 선택","선택군G 택4",3,1,3,3],
+  ["2026","사회","역사로 탐구하는 현대 세계","융합 선택","선택군G 택4",3,1,3,4],
+  ["2026","사회","사회문제 탐구","융합 선택","선택군G 택4",3,1,3,6],
+  ["2026","사회","기후변화와 지속가능한 세계","융합 선택","선택군G 택4",3,1,3,3],
+  ["2026","과학","전자기와 양자","진로 선택","선택군G 택4",3,1,3,4],
+  ["2026","과학","물질과 에너지","진로 선택","선택군G 택4",3,1,3,5],
+  ["2026","과학","화학 반응의 세계","진로 선택","선택군G 택4",3,1,3,6],
+  ["2026","과학","세포와 물질대사","진로 선택","선택군G 택4",3,1,3,7],
+  ["2026","과학","지구시스템과학","진로 선택","선택군G 택4",3,1,3,5],
+  // 2026 선택군H 택1 (3-1)
+  ["2026","기술·가정/정보","인공지능 기초","진로 선택","선택군H 택1",3,1,4,5],
+  ["2026","제2외국어(일본어)","일본어 회화","진로 선택","선택군H 택1",3,1,4,3],
+  ["2026","제2외국어(중국어)","중국어 회화","진로 선택","선택군H 택1",3,1,4,2],
+  ["2026","한문","언어생활과 한자","융합 선택","선택군H 택1",3,1,4,2],
+  ["2026","교양","논리와 사고","진로 선택","선택군H 택1",3,1,4,1],
+  // 2026 선택군I 택3 (3-2)
+  ["2026","국어","독서 토론과 글쓰기","융합 선택","선택군I 택3",3,2,3,7],
+  ["2026","국어","언어생활 탐구","융합 선택","선택군I 택3",3,2,3,8],
+  ["2026","수학","수학과제 탐구","융합 선택","선택군I 택3",3,2,3,9],
+  ["2026","영어","심화 영어 독해와 작문","진로 선택","선택군I 택3",3,2,3,8],
+  ["2026","영어","미디어 영어","융합 선택","선택군I 택3",3,2,3,7],
+  // 2026 선택군J 택4 (3-2)
+  ["2026","사회","윤리문제 탐구","융합 선택","선택군J 택4",3,2,3,6],
+  ["2026","사회","여행지리","융합 선택","선택군J 택4",3,2,3,6],
+  ["2026","사회","금융과 경제생활","융합 선택","선택군J 택4",3,2,3,5],
+  ["2026","과학","기후변화와 환경생태","융합 선택","선택군J 택4",3,2,3,8],
+  ["2026","과학","과학의 역사와 문화","융합 선택","선택군J 택4",3,2,3,7],
+  ["2026","과학","융합과학 탐구","융합 선택","선택군J 택4",3,2,3,7],
+  // 2026 선택군K 택1 (3-2)
+  ["2026","기술·가정/정보","소프트웨어와 생활","융합 선택","선택군K 택1",3,2,4,3],
+  ["2026","제2외국어(일본어)","심화 일본어","진로 선택","선택군K 택1",3,2,4,4],
+  ["2026","제2외국어(중국어)","심화 중국어","진로 선택","선택군K 택1",3,2,4,2],
+  ["2026","한문","한문 고전 읽기","진로 선택","선택군K 택1",3,2,4,2],
+  ["2026","교양","인간과 심리","진로 선택","선택군K 택1",3,2,4,1],
+  ["2026","교양","논술","융합 선택","선택군K 택1",3,2,4,1],
+];
+
+const CHOICE_2026 = {
+  "2_1": [  // 2학년 1학기 (2027년 운영, 현 1학년 선택)
+    { 과목: "주제 탐구 독서",  인원: 125 },
+    { 과목: "기하",        인원: 120 },
+    { 과목: "영어 발표와 토론", 인원: 25 },
+    { 과목: "세계시민과 지리",  인원: 64 },
+    { 과목: "세계사",       인원: 89 },
+    { 과목: "사회와 문화",    인원: 162 },
+    { 과목: "현대사회와 윤리",  인원: 166 },
+    { 과목: "물리학",       인원: 111 },
+    { 과목: "화학",        인원: 122 },
+    { 과목: "지구과학",      인원: 96 },
+    { 과목: "일본어",       인원: 201 },
+    { 과목: "중국어",       인원: 69 }
+  ],
+  "2_2": [  // 2학년 2학기 (2027년 운영, 현 1학년 선택)
+    { 과목: "한국지리 탐구",    인원: 49 },
+    { 과목: "윤리와 사상",     인원: 156 },
+    { 과목: "정치",         인원: 79 },
+    { 과목: "법과 사회",      인원: 113 },
+    { 과목: "동아시아 역사 기행", 인원: 46 },
+    { 과목: "생명과학",       인원: 140 },
+    { 과목: "역학과 에너지",    인원: 97 },
+    { 과목: "생물의 유전",     인원: 104 },
+    { 과목: "행성우주과학",     인원: 26 },
+    { 과목: "일본 문화",      인원: 201 },
+    { 과목: "중국 문화",      인원: 69 }
+  ],
+  "3_1": [  // 3학년 1학기 (2027년 운영, 현 2학년 선택)
+    { 과목: "문학과 영상",         인원: 104 },
+    { 과목: "미적분Ⅱ",           인원: 117 },
+    { 과목: "심화 영어",          인원: 18 },
+    { 과목: "도시의 미래 탐구",      인원: 90 },
+    { 과목: "경제",             인원: 18 },
+    { 과목: "윤리와 사상",         인원: 7 },
+    { 과목: "인문학과 윤리",        인원: 44 },
+    { 과목: "국제 관계의 이해",      인원: 86 },
+    { 과목: "여행지리",           인원: 12 },
+    { 과목: "역사로 탐구하는 현대 세계", 인원: 62 },
+    { 과목: "사회문제 탐구",        인원: 46 },
+    { 과목: "금융과 경제생활",       인원: 16 },
+    { 과목: "윤리문제 탐구",        인원: 50 },
+    { 과목: "기후변화와 지속가능한 세계", 인원: 37 },
+    { 과목: "역학과 에너지",        인원: 43 },
+    { 과목: "전자기와 양자",        인원: 42 },
+    { 과목: "물질과 에너지",        인원: 96 },
+    { 과목: "화학 반응의 세계",      인원: 108 },
+    { 과목: "세포와 물질대사",       인원: 89 },
+    { 과목: "생물의 유전",         인원: 82 },
+    { 과목: "지구시스템과학",        인원: 14 },
+    { 과목: "행성우주과학",         인원: 14 },
+    { 과목: "인공지능 기초",        인원: 61 },
+    { 과목: "일본어 회화",         인원: 75 },
+    { 과목: "중국어 회화",         인원: 21 },
+    { 과목: "언어생활과 한자",       인원: 14 },
+    { 과목: "생태와 환경",         인원: 45 },
+    { 과목: "논리와 사고",         인원: 23 }
+  ],
+  "3_2": [  // 3학년 2학기 (2027년 운영, 현 2학년 선택)
+    { 과목: "주제 탐구 독서",     인원: 197 },
+    { 과목: "언어생활 탐구",      인원: 173 },
+    { 과목: "실용 통계",        인원: 138 },
+    { 과목: "수학과제 탐구",      인원: 132 },
+    { 과목: "심화 영어 독해와 작문", 인원: 154 },
+    { 과목: "미디어 영어",       인원: 162 },
+    { 과목: "인문학과 윤리",      인원: 80 },
+    { 과목: "여행지리",         인원: 113 },
+    { 과목: "사회문제 탐구",      인원: 133 },
+    { 과목: "금융과 경제생활",     인원: 102 },
+    { 과목: "전자기와 양자",      인원: 18 },
+    { 과목: "물질과 에너지",      인원: 14 },
+    { 과목: "세포와 물질대사",     인원: 25 },
+    { 과목: "지구시스템과학",      인원: 35 },
+    { 과목: "기후변화와 환경생태",   인원: 164 },
+    { 과목: "과학의 역사와 문화",   인원: 145 },
+    { 과목: "융합과학 탐구",      인원: 127 },
+    { 과목: "소프트웨어와 생활",    인원: 39 },
+    { 과목: "심화 일본어",       인원: 44 },
+    { 과목: "심화 중국어",       인원: 8 },
+    { 과목: "한문 고전 읽기",     인원: 2 },
+    { 과목: "인간과 심리",       인원: 116 },
+    { 과목: "논술",           인원: 30 }
+  ]
+};
+
+// ================= 공통 설정 =================
+const 교과군_정렬순서 = ["국어","수학","영어","사회","과학","체육",
+  "예술(미술)","예술(음악)","기술·가정/정보",
+  "제2외국어(일본어)","제2외국어(중국어)","한문","교양"];
+function grpRank(g){ const i=교과군_정렬순서.indexOf(g); return i<0?999:i; }
+function cmpGroup(a,b){ return grpRank(a)-grpRank(b); }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+let _uid=0; const uid=()=>'s'+(++_uid)+Math.random().toString(36).slice(2,6);
+
+function toObj(r){ return {입학년도:r[0],교과군:r[1],과목명:r[2],과목유형:r[3],이수구분:r[4],
+  학년:r[5],학기:r[6],주당시수:r[7],예상개설반:r[8]}; }
+const BASE_2025_RAW = BASE_DATA.filter(r=>r[0]==="2025").map(toObj);
+const BASE_2026_RAW = BASE_DATA.filter(r=>r[0]==="2026").map(toObj);
+
+// 선택 인원 → 개설반
+let classDivisor = 23;
+function classesFromChoice(n){ if(n==null||n<=0) return 0; return Math.max(1, Math.round(n/classDivisor)); }
+const CHOICE_LOOKUP = (()=>{ const m={}; const add=(g,sem,a)=>a.forEach(r=>m[g+"|"+sem+"|"+r.과목]=r.인원);
+  add(2,1,CHOICE_2026["2_1"]); add(2,2,CHOICE_2026["2_2"]); add(3,1,CHOICE_2026["3_1"]); add(3,2,CHOICE_2026["3_2"]); return m; })();
+function choiceOf(s){ const n=CHOICE_LOOKUP[s.학년+"|"+s.학기+"|"+s.과목명]; return (n==null)?null:n; }
+function isElective(s){ return s.이수구분 && s.이수구분.indexOf("선택군")!==-1; }
+function applyChoiceClasses(arr){ arr.forEach(s=>{ if(!isElective(s))return; const n=choiceOf(s); s.예상개설반=(n==null)?0:classesFromChoice(n); }); }
+
+// 교과군별 교사 수 (평균 시수 계산용)
+const DEFAULT_TEACHERS = { "국어":10,"수학":10,"영어":10,"사회":12,"과학":11,"체육":4,
+  "예술(미술)":2,"예술(음악)":2,"기술·가정/정보":2,"제2외국어(일본어)":2,"제2외국어(중국어)":1,"한문":3,"교양":0 };
+let teacherCounts = {...DEFAULT_TEACHERS};
+function teacherOf(g){ return teacherCounts[g]!==undefined ? Number(teacherCounts[g]) : 0; }
+function avgFmt(total,g){ const t=teacherOf(g); if(!t||t<=0) return '—'; return (total/t).toFixed(1); }
+
+// ================= 상태 =================
+const KEY="curri_wizard_state", VER="v3-2026.6.22";
+// 배포 기본값: 편집본을 여기에 넣으면 첫 방문자에게 그 편제표가 기본으로 보임 (null이면 원본 BASE_DATA 사용)
+const EMBEDDED_STATE = {"ver":"v2-2026.6.20","m25":[{"입학년도":"2025","교과군":"국어","과목명":"공통국어1","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":1,"주당시수":4,"예상개설반":13,"id":"s1aory","제외":false},{"입학년도":"2025","교과군":"국어","과목명":"공통국어2","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":2,"주당시수":3,"예상개설반":13,"id":"s2iedj","제외":false},{"입학년도":"2025","교과군":"국어","과목명":"문학","과목유형":"일반 선택","이수구분":"지정","학년":2,"학기":1,"주당시수":4,"예상개설반":13,"id":"s3skca","제외":false},{"입학년도":"2025","교과군":"국어","과목명":"독서와 작문","과목유형":"일반 선택","이수구분":"지정","학년":2,"학기":2,"주당시수":4,"예상개설반":13,"id":"s4my5e","제외":false},{"입학년도":"2025","교과군":"국어","과목명":"화법과 언어","과목유형":"일반 선택","이수구분":"지정","학년":3,"학기":1,"주당시수":3,"예상개설반":13,"id":"s5vnrs","제외":false},{"입학년도":"2025","교과군":"수학","과목명":"공통수학1","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":1,"주당시수":3,"예상개설반":13,"id":"s6wwcc","제외":false},{"입학년도":"2025","교과군":"수학","과목명":"공통수학2","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":2,"주당시수":3,"예상개설반":13,"id":"s7cvnq","제외":false},{"입학년도":"2025","교과군":"수학","과목명":"대수","과목유형":"일반 선택","이수구분":"지정","학년":2,"학기":1,"주당시수":4,"예상개설반":13,"id":"s86zz2","제외":false},{"입학년도":"2025","교과군":"수학","과목명":"미적분Ⅰ","과목유형":"일반 선택","이수구분":"지정","학년":2,"학기":2,"주당시수":4,"예상개설반":13,"id":"s9199i","제외":false},{"입학년도":"2025","교과군":"수학","과목명":"확률과 통계","과목유형":"일반 선택","이수구분":"지정","학년":3,"학기":1,"주당시수":3,"예상개설반":13,"id":"s10ucw4","제외":false},{"입학년도":"2025","교과군":"영어","과목명":"공통영어1","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":1,"주당시수":3,"예상개설반":13,"id":"s11iahs","제외":false},{"입학년도":"2025","교과군":"영어","과목명":"공통영어2","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":2,"주당시수":4,"예상개설반":13,"id":"s12o8ci","제외":false},{"입학년도":"2025","교과군":"영어","과목명":"영어Ⅰ","과목유형":"일반 선택","이수구분":"지정","학년":2,"학기":1,"주당시수":4,"예상개설반":13,"id":"s13r4lq","제외":false},{"입학년도":"2025","교과군":"영어","과목명":"영어Ⅱ","과목유형":"일반 선택","이수구분":"지정","학년":2,"학기":2,"주당시수":4,"예상개설반":13,"id":"s149c3u","제외":false},{"입학년도":"2025","교과군":"영어","과목명":"영어 독해와 작문","과목유형":"일반 선택","이수구분":"지정","학년":3,"학기":1,"주당시수":3,"예상개설반":13,"id":"s15n1a0","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"한국사1","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":1,"주당시수":3,"예상개설반":13,"id":"s160jqz","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"한국사2","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":2,"주당시수":3,"예상개설반":13,"id":"s17ffsy","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"통합사회1","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":1,"주당시수":4,"예상개설반":13,"id":"s183jx1","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"통합사회2","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":2,"주당시수":4,"예상개설반":13,"id":"s1958bj","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"통합과학1","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":1,"주당시수":4,"예상개설반":13,"id":"s20v5u3","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"통합과학2","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":2,"주당시수":4,"예상개설반":13,"id":"s2146j7","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"과학탐구실험1","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":1,"주당시수":1,"예상개설반":13,"id":"s22qu6m","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"과학탐구실험2","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":2,"주당시수":1,"예상개설반":13,"id":"s23ad65","제외":false},{"입학년도":"2025","교과군":"체육","과목명":"체육1","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":1,"주당시수":2,"예상개설반":13,"id":"s24nhvt","제외":false},{"입학년도":"2025","교과군":"체육","과목명":"체육2","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":2,"주당시수":2,"예상개설반":13,"id":"s25rfo1","제외":false},{"입학년도":"2025","교과군":"체육","과목명":"스포츠 생활1","과목유형":"융합 선택","이수구분":"지정","학년":2,"학기":1,"주당시수":2,"예상개설반":13,"id":"s26u74u","제외":false},{"입학년도":"2025","교과군":"체육","과목명":"스포츠 생활2","과목유형":"융합 선택","이수구분":"지정","학년":2,"학기":2,"주당시수":2,"예상개설반":13,"id":"s27xjmu","제외":false},{"입학년도":"2025","교과군":"체육","과목명":"스포츠 문화","과목유형":"진로 선택","이수구분":"지정","학년":3,"학기":1,"주당시수":1,"예상개설반":13,"id":"s285ivb","제외":false},{"입학년도":"2025","교과군":"체육","과목명":"스포츠 과학","과목유형":"진로 선택","이수구분":"지정","학년":3,"학기":2,"주당시수":1,"예상개설반":13,"id":"s297ait","제외":false},{"입학년도":"2025","교과군":"예술(음악)","과목명":"음악","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":1,"주당시수":2,"예상개설반":6,"id":"s30fyu6","제외":false},{"입학년도":"2025","교과군":"예술(음악)","과목명":"음악","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":2,"주당시수":2,"예상개설반":7,"id":"s31xroo","제외":false},{"입학년도":"2025","교과군":"예술(미술)","과목명":"미술","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":1,"주당시수":2,"예상개설반":7,"id":"s326afv","제외":false},{"입학년도":"2025","교과군":"예술(미술)","과목명":"미술","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":2,"주당시수":2,"예상개설반":6,"id":"s33a021","제외":false},{"입학년도":"2025","교과군":"예술(음악)","과목명":"음악 연주와 창작","과목유형":"진로 선택","이수구분":"지정","학년":2,"학기":1,"주당시수":3,"예상개설반":7,"id":"s34d0uc","제외":false},{"입학년도":"2025","교과군":"예술(음악)","과목명":"음악 연주와 창작","과목유형":"진로 선택","이수구분":"지정","학년":2,"학기":2,"주당시수":3,"예상개설반":6,"id":"s35f0x5","제외":false},{"입학년도":"2025","교과군":"예술(미술)","과목명":"미술 창작","과목유형":"진로 선택","이수구분":"지정","학년":2,"학기":1,"주당시수":3,"예상개설반":6,"id":"s364vt5","제외":false},{"입학년도":"2025","교과군":"예술(미술)","과목명":"미술 창작","과목유형":"진로 선택","이수구분":"지정","학년":2,"학기":2,"주당시수":3,"예상개설반":7,"id":"s374g6n","제외":false},{"입학년도":"2025","교과군":"기술·가정/정보","과목명":"정보","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":1,"주당시수":3,"예상개설반":6,"id":"s38hfet","제외":false},{"입학년도":"2025","교과군":"기술·가정/정보","과목명":"정보","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":2,"주당시수":3,"예상개설반":7,"id":"s39wscn","제외":false},{"입학년도":"2025","교과군":"한문","과목명":"한문","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":1,"주당시수":3,"예상개설반":7,"id":"s40o82f","제외":false},{"입학년도":"2025","교과군":"한문","과목명":"한문","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":2,"주당시수":3,"예상개설반":6,"id":"s41526b","제외":false},{"입학년도":"2025","교과군":"수학","과목명":"인공지능 수학","과목유형":"진로 선택","이수구분":"선택군A 택3","학년":2,"학기":1,"주당시수":3,"예상개설반":0,"id":"s42fbdk","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"세계시민과 지리","과목유형":"일반 선택","이수구분":"선택군A 택3","학년":2,"학기":1,"주당시수":3,"예상개설반":3,"id":"s43hwqc","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"세계사","과목유형":"일반 선택","이수구분":"선택군A 택3","학년":2,"학기":1,"주당시수":3,"예상개설반":4,"id":"s44bzzm","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"사회와 문화","과목유형":"일반 선택","이수구분":"선택군A 택3","학년":2,"학기":1,"주당시수":3,"예상개설반":7,"id":"s45rlzx","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"현대사회와 윤리","과목유형":"일반 선택","이수구분":"선택군A 택3","학년":2,"학기":1,"주당시수":3,"예상개설반":7,"id":"s46dv4x","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"법과 사회","과목유형":"진로 선택","이수구분":"선택군A 택3","학년":2,"학기":1,"주당시수":3,"예상개설반":0,"id":"s47niwi","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"물리학","과목유형":"일반 선택","이수구분":"선택군A 택3","학년":2,"학기":1,"주당시수":3,"예상개설반":5,"id":"s48k8nj","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"생명과학","과목유형":"일반 선택","이수구분":"선택군A 택3","학년":2,"학기":1,"주당시수":3,"예상개설반":0,"id":"s49n9o1","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"기후변화와 환경생태","과목유형":"융합 선택","이수구분":"선택군A 택3","학년":2,"학기":1,"주당시수":3,"예상개설반":0,"id":"s50n4je","제외":false},{"입학년도":"2025","교과군":"제2외국어(일본어)","과목명":"일본어","과목유형":"일반 선택","이수구분":"선택군B 택1","학년":2,"학기":1,"주당시수":3,"예상개설반":9,"id":"s516cjc","제외":false},{"입학년도":"2025","교과군":"제2외국어(중국어)","과목명":"중국어","과목유형":"일반 선택","이수구분":"선택군B 택1","학년":2,"학기":1,"주당시수":3,"예상개설반":3,"id":"s52f50b","제외":false},{"입학년도":"2025","교과군":"수학","과목명":"기하","과목유형":"진로 선택","이수구분":"선택군C 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":0,"id":"s535av2","제외":false},{"입학년도":"2025","교과군":"수학","과목명":"경제 수학","과목유형":"진로 선택","이수구분":"선택군C 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":0,"id":"s54d4h0","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"한국지리 탐구","과목유형":"진로 선택","이수구분":"선택군C 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":2,"id":"s55wndx","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"윤리와 사상","과목유형":"진로 선택","이수구분":"선택군C 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":7,"id":"s56yopl","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"정치","과목유형":"진로 선택","이수구분":"선택군C 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":3,"id":"s575p20","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"경제","과목유형":"진로 선택","이수구분":"선택군C 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":0,"id":"s58fciz","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"동아시아 역사 기행","과목유형":"진로 선택","이수구분":"선택군C 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":2,"id":"s59m7xt","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"윤리문제 탐구","과목유형":"융합 선택","이수구분":"선택군C 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":0,"id":"s60cw74","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"기후변화와 지속가능한 세계","과목유형":"융합 선택","이수구분":"선택군C 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":0,"id":"s61a00k","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"화학","과목유형":"일반 선택","이수구분":"선택군C 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":0,"id":"s6289pi","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"지구과학","과목유형":"일반 선택","이수구분":"선택군C 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":0,"id":"s639bsh","제외":false},{"입학년도":"2025","교과군":"제2외국어(일본어)","과목명":"일본 문화","과목유형":"융합 선택","이수구분":"선택군D 택1","학년":2,"학기":2,"주당시수":3,"예상개설반":9,"id":"s64q8zg","제외":false},{"입학년도":"2025","교과군":"제2외국어(중국어)","과목명":"중국 문화","과목유형":"융합 선택","이수구분":"선택군D 택1","학년":2,"학기":2,"주당시수":3,"예상개설반":3,"id":"s65gfqc","제외":false},{"입학년도":"2025","교과군":"국어","과목명":"문학과 영상","과목유형":"진로 선택","이수구분":"선택군E 택1","학년":3,"학기":1,"주당시수":3,"예상개설반":5,"id":"s66n9im","제외":false},{"입학년도":"2025","교과군":"수학","과목명":"미적분Ⅱ","과목유형":"진로 선택","이수구분":"선택군E 택1","학년":3,"학기":1,"주당시수":3,"예상개설반":5,"id":"s67cqch","제외":false},{"입학년도":"2025","교과군":"영어","과목명":"심화 영어","과목유형":"진로 선택","이수구분":"선택군E 택1","학년":3,"학기":1,"주당시수":3,"예상개설반":0,"id":"s68ewly","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"도시의 미래 탐구","과목유형":"진로 선택","이수구분":"선택군F 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":4,"id":"s69jk96","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"경제","과목유형":"진로 선택","이수구분":"선택군F 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":0,"id":"s70jkmb","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"윤리와 사상","과목유형":"진로 선택","이수구분":"선택군F 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":0,"id":"s71ddtn","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"인문학과 윤리","과목유형":"진로 선택","이수구분":"선택군F 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":2,"id":"s729ujx","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"국제 관계의 이해","과목유형":"진로 선택","이수구분":"선택군F 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":4,"id":"s73flq4","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"여행지리","과목유형":"융합 선택","이수구분":"선택군F 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":0,"id":"s740l9y","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"역사로 탐구하는 현대 세계","과목유형":"융합 선택","이수구분":"선택군F 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":3,"id":"s75ty7g","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"사회문제 탐구","과목유형":"융합 선택","이수구분":"선택군F 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":2,"id":"s767haf","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"금융과 경제생활","과목유형":"융합 선택","이수구분":"선택군F 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":1,"id":"s77281y","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"윤리문제 탐구","과목유형":"융합 선택","이수구분":"선택군F 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":2,"id":"s78labo","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"기후변화와 지속가능한 세계","과목유형":"융합 선택","이수구분":"선택군F 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":2,"id":"s79rz78","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"역학과 에너지","과목유형":"진로 선택","이수구분":"선택군F 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":2,"id":"s803em8","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"전자기와 양자","과목유형":"진로 선택","이수구분":"선택군F 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":2,"id":"s81cbkv","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"물질과 에너지","과목유형":"진로 선택","이수구분":"선택군F 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":4,"id":"s820695","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"화학 반응의 세계","과목유형":"진로 선택","이수구분":"선택군F 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":5,"id":"s831zo0","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"세포와 물질대사","과목유형":"진로 선택","이수구분":"선택군F 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":4,"id":"s84iv0l","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"생물의 유전","과목유형":"진로 선택","이수구분":"선택군F 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":4,"id":"s85zhkr","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"지구시스템과학","과목유형":"진로 선택","이수구분":"선택군F 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":1,"id":"s86xhbx","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"행성우주과학","과목유형":"진로 선택","이수구분":"선택군F 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":1,"id":"s87hw8i","제외":false},{"입학년도":"2025","교과군":"기술·가정/정보","과목명":"인공지능 기초","과목유형":"진로 선택","이수구분":"선택군G 택1","학년":3,"학기":1,"주당시수":4,"예상개설반":3,"id":"s88bszb","제외":false},{"입학년도":"2025","교과군":"제2외국어(일본어)","과목명":"일본어 회화","과목유형":"진로 선택","이수구분":"선택군G 택1","학년":3,"학기":1,"주당시수":4,"예상개설반":3,"id":"s89bux9","제외":false},{"입학년도":"2025","교과군":"제2외국어(중국어)","과목명":"중국어 회화","과목유형":"진로 선택","이수구분":"선택군G 택1","학년":3,"학기":1,"주당시수":4,"예상개설반":1,"id":"s9033lv","제외":false},{"입학년도":"2025","교과군":"한문","과목명":"언어생활과 한자","과목유형":"융합 선택","이수구분":"선택군G 택1","학년":3,"학기":1,"주당시수":4,"예상개설반":1,"id":"s91x84a","제외":false},{"입학년도":"2025","교과군":"교양","과목명":"생태와 환경","과목유형":"일반 선택","이수구분":"선택군G 택1","학년":3,"학기":1,"주당시수":4,"예상개설반":2,"id":"s92zfoh","제외":false},{"입학년도":"2025","교과군":"교양","과목명":"논리와 사고","과목유형":"진로 선택","이수구분":"선택군G 택1","학년":3,"학기":1,"주당시수":4,"예상개설반":1,"id":"s933k8o","제외":false},{"입학년도":"2025","교과군":"국어","과목명":"주제 탐구 독서","과목유형":"진로 선택","이수구분":"선택군H 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":9,"id":"s94uszm","제외":false},{"입학년도":"2025","교과군":"국어","과목명":"언어생활 탐구","과목유형":"융합 선택","이수구분":"선택군H 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":8,"id":"s95llil","제외":false},{"입학년도":"2025","교과군":"수학","과목명":"실용 통계","과목유형":"융합 선택","이수구분":"선택군H 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":6,"id":"s96us83","제외":false},{"입학년도":"2025","교과군":"수학","과목명":"수학과제 탐구","과목유형":"융합 선택","이수구분":"선택군H 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":6,"id":"s97a89x","제외":false},{"입학년도":"2025","교과군":"영어","과목명":"심화 영어 독해와 작문","과목유형":"진로 선택","이수구분":"선택군H 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":8,"id":"s98go1j","제외":false},{"입학년도":"2025","교과군":"영어","과목명":"미디어 영어","과목유형":"융합 선택","이수구분":"선택군H 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":8,"id":"s9958tu","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"인문학과 윤리","과목유형":"진로 선택","이수구분":"선택군I 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":3,"id":"s100ob7x","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"여행지리","과목유형":"융합 선택","이수구분":"선택군I 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":5,"id":"s1017r77","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"사회문제 탐구","과목유형":"융합 선택","이수구분":"선택군I 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":6,"id":"s102sb9j","제외":false},{"입학년도":"2025","교과군":"사회","과목명":"금융과 경제생활","과목유형":"융합 선택","이수구분":"선택군I 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":4,"id":"s103rfv9","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"전자기와 양자","과목유형":"진로 선택","이수구분":"선택군I 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":1,"id":"s1045rem","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"물질과 에너지","과목유형":"진로 선택","이수구분":"선택군I 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":1,"id":"s1055ayr","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"세포와 물질대사","과목유형":"진로 선택","이수구분":"선택군I 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":1,"id":"s1060ocf","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"지구시스템과학","과목유형":"진로 선택","이수구분":"선택군I 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":2,"id":"s107qazk","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"기후변화와 환경생태","과목유형":"융합 선택","이수구분":"선택군I 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":7,"id":"s108x20n","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"과학의 역사와 문화","과목유형":"융합 선택","이수구분":"선택군I 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":6,"id":"s109jgp6","제외":false},{"입학년도":"2025","교과군":"과학","과목명":"융합과학 탐구","과목유형":"융합 선택","이수구분":"선택군I 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":6,"id":"s110bsqv","제외":false},{"입학년도":"2025","교과군":"기술·가정/정보","과목명":"소프트웨어와 생활","과목유형":"융합 선택","이수구분":"선택군J 택1","학년":3,"학기":2,"주당시수":4,"예상개설반":2,"id":"s111xcp0","제외":false},{"입학년도":"2025","교과군":"제2외국어(일본어)","과목명":"심화 일본어","과목유형":"진로 선택","이수구분":"선택군J 택1","학년":3,"학기":2,"주당시수":4,"예상개설반":2,"id":"s112t7zu","제외":false},{"입학년도":"2025","교과군":"제2외국어(중국어)","과목명":"심화 중국어","과목유형":"진로 선택","이수구분":"선택군J 택1","학년":3,"학기":2,"주당시수":4,"예상개설반":1,"id":"s113mo51","제외":false},{"입학년도":"2025","교과군":"한문","과목명":"한문 고전 읽기","과목유형":"진로 선택","이수구분":"선택군J 택1","학년":3,"학기":2,"주당시수":4,"예상개설반":1,"id":"s114025s","제외":false},{"입학년도":"2025","교과군":"교양","과목명":"인간과 심리","과목유형":"진로 선택","이수구분":"선택군J 택1","학년":3,"학기":2,"주당시수":4,"예상개설반":5,"id":"s115wx4x","제외":false},{"입학년도":"2025","교과군":"교양","과목명":"논술","과목유형":"융합 선택","이수구분":"선택군J 택1","학년":3,"학기":2,"주당시수":4,"예상개설반":1,"id":"s11640xf","제외":false}],"m26":[{"입학년도":"2026","교과군":"국어","과목명":"공통국어1","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":1,"주당시수":4,"예상개설반":13,"id":"s117kipv","제외":false},{"입학년도":"2026","교과군":"국어","과목명":"공통국어2","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":2,"주당시수":3,"예상개설반":13,"id":"s118cxwl","제외":false},{"입학년도":"2026","교과군":"국어","과목명":"문학","과목유형":"일반 선택","이수구분":"지정","학년":2,"학기":1,"주당시수":4,"예상개설반":13,"id":"s1193ba1","제외":false},{"입학년도":"2026","교과군":"국어","과목명":"화법과 언어","과목유형":"일반 선택","이수구분":"지정","학년":2,"학기":2,"주당시수":4,"예상개설반":13,"id":"s120dx44","제외":false},{"입학년도":"2026","교과군":"국어","과목명":"독서와 작문","과목유형":"일반 선택","이수구분":"지정","학년":3,"학기":1,"주당시수":3,"예상개설반":13,"id":"s121e6ra","제외":false},{"입학년도":"2026","교과군":"수학","과목명":"공통수학1","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":1,"주당시수":3,"예상개설반":13,"id":"s1229r6d","제외":false},{"입학년도":"2026","교과군":"수학","과목명":"공통수학2","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":2,"주당시수":3,"예상개설반":13,"id":"s123izrk","제외":false},{"입학년도":"2026","교과군":"수학","과목명":"대수","과목유형":"일반 선택","이수구분":"지정","학년":2,"학기":1,"주당시수":4,"예상개설반":13,"id":"s124umo6","제외":false},{"입학년도":"2026","교과군":"수학","과목명":"미적분Ⅰ","과목유형":"일반 선택","이수구분":"지정","학년":2,"학기":2,"주당시수":4,"예상개설반":13,"id":"s1258tjd","제외":false},{"입학년도":"2026","교과군":"수학","과목명":"확률과 통계","과목유형":"일반 선택","이수구분":"지정","학년":2,"학기":2,"주당시수":3,"예상개설반":13,"id":"s126vosf","제외":false},{"입학년도":"2026","교과군":"영어","과목명":"공통영어1","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":1,"주당시수":3,"예상개설반":13,"id":"s1279aqr","제외":false},{"입학년도":"2026","교과군":"영어","과목명":"공통영어2","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":2,"주당시수":4,"예상개설반":13,"id":"s128sddf","제외":false},{"입학년도":"2026","교과군":"영어","과목명":"영어Ⅰ","과목유형":"일반 선택","이수구분":"지정","학년":2,"학기":1,"주당시수":4,"예상개설반":13,"id":"s129q7sv","제외":false},{"입학년도":"2026","교과군":"영어","과목명":"영어Ⅱ","과목유형":"일반 선택","이수구분":"지정","학년":2,"학기":2,"주당시수":4,"예상개설반":13,"id":"s130yyg5","제외":false},{"입학년도":"2026","교과군":"영어","과목명":"영어 독해와 작문","과목유형":"일반 선택","이수구분":"지정","학년":3,"학기":1,"주당시수":3,"예상개설반":13,"id":"s1310de9","제외":false},{"입학년도":"2026","교과군":"사회","과목명":"한국사1","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":1,"주당시수":3,"예상개설반":13,"id":"s1325gr3","제외":false},{"입학년도":"2026","교과군":"사회","과목명":"한국사2","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":2,"주당시수":3,"예상개설반":13,"id":"s133vk4b","제외":false},{"입학년도":"2026","교과군":"사회","과목명":"통합사회1","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":1,"주당시수":4,"예상개설반":13,"id":"s134z95p","제외":false},{"입학년도":"2026","교과군":"사회","과목명":"통합사회2","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":2,"주당시수":4,"예상개설반":13,"id":"s135rlfx","제외":false},{"입학년도":"2026","교과군":"과학","과목명":"통합과학1","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":1,"주당시수":4,"예상개설반":13,"id":"s136xrtn","제외":false},{"입학년도":"2026","교과군":"과학","과목명":"통합과학2","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":2,"주당시수":4,"예상개설반":13,"id":"s13770q2","제외":false},{"입학년도":"2026","교과군":"과학","과목명":"과학탐구실험1","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":1,"주당시수":1,"예상개설반":13,"id":"s138q33v","제외":false},{"입학년도":"2026","교과군":"과학","과목명":"과학탐구실험2","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":2,"주당시수":1,"예상개설반":13,"id":"s1398g8e","제외":false},{"입학년도":"2026","교과군":"체육","과목명":"체육1","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":1,"주당시수":2,"예상개설반":13,"id":"s140k8b7","제외":false},{"입학년도":"2026","교과군":"체육","과목명":"체육2","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":2,"주당시수":2,"예상개설반":13,"id":"s141jv6g","제외":false},{"입학년도":"2026","교과군":"체육","과목명":"스포츠 생활1","과목유형":"융합 선택","이수구분":"지정","학년":2,"학기":1,"주당시수":2,"예상개설반":13,"id":"s1422ir0","제외":false},{"입학년도":"2026","교과군":"체육","과목명":"스포츠 생활2","과목유형":"융합 선택","이수구분":"지정","학년":2,"학기":2,"주당시수":2,"예상개설반":13,"id":"s143y3a0","제외":false},{"입학년도":"2026","교과군":"체육","과목명":"스포츠 문화","과목유형":"진로 선택","이수구분":"지정","학년":3,"학기":1,"주당시수":1,"예상개설반":13,"id":"s1441zfk","제외":false},{"입학년도":"2026","교과군":"체육","과목명":"스포츠 과학","과목유형":"진로 선택","이수구분":"지정","학년":3,"학기":2,"주당시수":1,"예상개설반":13,"id":"s145snyl","제외":false},{"입학년도":"2026","교과군":"예술(음악)","과목명":"음악","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":1,"주당시수":2,"예상개설반":6,"id":"s146kc55","제외":false},{"입학년도":"2026","교과군":"예술(음악)","과목명":"음악","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":2,"주당시수":2,"예상개설반":7,"id":"s147v25g","제외":false},{"입학년도":"2026","교과군":"예술(미술)","과목명":"미술","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":1,"주당시수":2,"예상개설반":7,"id":"s14874un","제외":false},{"입학년도":"2026","교과군":"예술(미술)","과목명":"미술","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":2,"주당시수":2,"예상개설반":6,"id":"s149g2id","제외":false},{"입학년도":"2026","교과군":"예술(음악)","과목명":"음악 연주와 창작","과목유형":"진로 선택","이수구분":"지정","학년":3,"학기":1,"주당시수":3,"예상개설반":7,"id":"s150zp7e","제외":false},{"입학년도":"2026","교과군":"예술(음악)","과목명":"음악 연주와 창작","과목유형":"진로 선택","이수구분":"지정","학년":3,"학기":2,"주당시수":3,"예상개설반":6,"id":"s1519icu","제외":false},{"입학년도":"2026","교과군":"예술(미술)","과목명":"미술 창작","과목유형":"진로 선택","이수구분":"지정","학년":3,"학기":1,"주당시수":3,"예상개설반":6,"id":"s152rvqm","제외":false},{"입학년도":"2026","교과군":"예술(미술)","과목명":"미술 창작","과목유형":"진로 선택","이수구분":"지정","학년":3,"학기":2,"주당시수":3,"예상개설반":7,"id":"s153h2yk","제외":false},{"입학년도":"2026","교과군":"기술·가정/정보","과목명":"정보","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":1,"주당시수":3,"예상개설반":6,"id":"s154y5na","제외":false},{"입학년도":"2026","교과군":"기술·가정/정보","과목명":"정보","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":2,"주당시수":3,"예상개설반":7,"id":"s155fhb6","제외":false},{"입학년도":"2026","교과군":"한문","과목명":"한문","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":1,"주당시수":3,"예상개설반":7,"id":"s1563p79","제외":false},{"입학년도":"2026","교과군":"한문","과목명":"한문","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":2,"주당시수":3,"예상개설반":6,"id":"s157ambv","제외":false},{"입학년도":"2026","교과군":"국어","과목명":"주제 탐구 독서","과목유형":"진로 선택","이수구분":"선택군A 택1","학년":2,"학기":1,"주당시수":3,"예상개설반":6,"id":"s1587uz6","제외":false},{"입학년도":"2026","교과군":"수학","과목명":"기하","과목유형":"진로 선택","이수구분":"선택군A 택1","학년":2,"학기":1,"주당시수":3,"예상개설반":5,"id":"s159gtef","제외":false},{"입학년도":"2026","교과군":"영어","과목명":"영어 발표와 토론","과목유형":"진로 선택","이수구분":"선택군A 택1","학년":2,"학기":1,"주당시수":3,"예상개설반":0,"id":"s160hltz","제외":false},{"입학년도":"2026","교과군":"사회","과목명":"세계시민과 지리","과목유형":"일반 선택","이수구분":"선택군B 택3","학년":2,"학기":1,"주당시수":3,"예상개설반":3,"id":"s16137om","제외":false},{"입학년도":"2026","교과군":"사회","과목명":"세계사","과목유형":"일반 선택","이수구분":"선택군B 택3","학년":2,"학기":1,"주당시수":3,"예상개설반":4,"id":"s162xrhx","제외":false},{"입학년도":"2026","교과군":"사회","과목명":"사회와 문화","과목유형":"일반 선택","이수구분":"선택군B 택3","학년":2,"학기":1,"주당시수":3,"예상개설반":7,"id":"s163zuus","제외":false},{"입학년도":"2026","교과군":"사회","과목명":"현대사회와 윤리","과목유형":"일반 선택","이수구분":"선택군B 택3","학년":2,"학기":1,"주당시수":3,"예상개설반":7,"id":"s1641pmq","제외":false},{"입학년도":"2026","교과군":"과학","과목명":"물리학","과목유형":"일반 선택","이수구분":"선택군B 택3","학년":2,"학기":1,"주당시수":3,"예상개설반":5,"id":"s165nd90","제외":false},{"입학년도":"2026","교과군":"과학","과목명":"지구과학","과목유형":"일반 선택","이수구분":"선택군B 택3","학년":2,"학기":1,"주당시수":3,"예상개설반":4,"id":"s166ndmr","제외":false},{"입학년도":"2026","교과군":"과학","과목명":"화학","과목유형":"일반 선택","이수구분":"선택군B 택3","학년":2,"학기":1,"주당시수":3,"예상개설반":5,"id":"s167uttj","제외":false},{"입학년도":"2026","교과군":"제2외국어(일본어)","과목명":"일본어","과목유형":"일반 선택","이수구분":"선택군C 택1","학년":2,"학기":1,"주당시수":3,"예상개설반":9,"id":"s168zx5k","제외":false},{"입학년도":"2026","교과군":"제2외국어(중국어)","과목명":"중국어","과목유형":"일반 선택","이수구분":"선택군C 택1","학년":2,"학기":1,"주당시수":3,"예상개설반":3,"id":"s169np8f","제외":false},{"입학년도":"2026","교과군":"사회","과목명":"한국지리 탐구","과목유형":"진로 선택","이수구분":"선택군D 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":2,"id":"s170ij5z","제외":false},{"입학년도":"2026","교과군":"사회","과목명":"윤리와 사상","과목유형":"진로 선택","이수구분":"선택군D 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":7,"id":"s171lh2b","제외":false},{"입학년도":"2026","교과군":"사회","과목명":"법과 사회","과목유형":"진로 선택","이수구분":"선택군D 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":5,"id":"s172rdvn","제외":false},{"입학년도":"2026","교과군":"사회","과목명":"정치","과목유형":"진로 선택","이수구분":"선택군D 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":3,"id":"s173j400","제외":false},{"입학년도":"2026","교과군":"사회","과목명":"동아시아 역사 기행","과목유형":"진로 선택","이수구분":"선택군D 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":2,"id":"s1740hz3","제외":false},{"입학년도":"2026","교과군":"과학","과목명":"생명과학","과목유형":"일반 선택","이수구분":"선택군D 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":6,"id":"s175e3m1","제외":false},{"입학년도":"2026","교과군":"과학","과목명":"역학과 에너지","과목유형":"진로 선택","이수구분":"선택군D 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":4,"id":"s1765j5o","제외":false},{"입학년도":"2026","교과군":"과학","과목명":"생물의 유전","과목유형":"진로 선택","이수구분":"선택군D 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":5,"id":"s17753jo","제외":false},{"입학년도":"2026","교과군":"과학","과목명":"행성우주과학","과목유형":"진로 선택","이수구분":"선택군D 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":1,"id":"s1784rhf","제외":false},{"입학년도":"2026","교과군":"제2외국어(일본어)","과목명":"일본 문화","과목유형":"융합 선택","이수구분":"선택군E 택1","학년":2,"학기":2,"주당시수":3,"예상개설반":9,"id":"s179t6vg","제외":false},{"입학년도":"2026","교과군":"제2외국어(중국어)","과목명":"중국 문화","과목유형":"융합 선택","이수구분":"선택군E 택1","학년":2,"학기":2,"주당시수":3,"예상개설반":3,"id":"s1809tvb","제외":false},{"입학년도":"2026","교과군":"국어","과목명":"문학과 영상","과목유형":"진로 선택","이수구분":"선택군F 택1","학년":3,"학기":1,"주당시수":3,"예상개설반":5,"id":"s181zo8e","제외":false},{"입학년도":"2026","교과군":"수학","과목명":"미적분Ⅱ","과목유형":"진로 선택","이수구분":"선택군F 택1","학년":3,"학기":1,"주당시수":3,"예상개설반":5,"id":"s182ins2","제외":false},{"입학년도":"2026","교과군":"수학","과목명":"경제 수학","과목유형":"진로 선택","이수구분":"선택군F 택1","학년":3,"학기":1,"주당시수":3,"예상개설반":0,"id":"s183p38o","제외":false},{"입학년도":"2026","교과군":"영어","과목명":"심화 영어","과목유형":"진로 선택","이수구분":"선택군F 택1","학년":3,"학기":1,"주당시수":3,"예상개설반":1,"id":"s184t2lg","제외":false},{"입학년도":"2026","교과군":"수학","과목명":"인공지능 수학","과목유형":"진로 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":0,"id":"s185khcs","제외":false},{"입학년도":"2026","교과군":"사회","과목명":"도시의 미래 탐구","과목유형":"진로 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":4,"id":"s186k17i","제외":false},{"입학년도":"2026","교과군":"사회","과목명":"경제","과목유형":"진로 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":1,"id":"s187fr1k","제외":false},{"입학년도":"2026","교과군":"사회","과목명":"인문학과 윤리","과목유형":"진로 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":2,"id":"s188kh6v","제외":false},{"입학년도":"2026","교과군":"사회","과목명":"국제 관계의 이해","과목유형":"진로 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":4,"id":"s1890wwq","제외":false},{"입학년도":"2026","교과군":"사회","과목명":"역사로 탐구하는 현대 세계","과목유형":"융합 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":3,"id":"s1905pss","제외":false},{"입학년도":"2026","교과군":"사회","과목명":"사회문제 탐구","과목유형":"융합 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":2,"id":"s191qdsl","제외":false},{"입학년도":"2026","교과군":"사회","과목명":"기후변화와 지속가능한 세계","과목유형":"융합 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":2,"id":"s192n0k0","제외":false},{"입학년도":"2026","교과군":"과학","과목명":"전자기와 양자","과목유형":"진로 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":2,"id":"s1933ga5","제외":false},{"입학년도":"2026","교과군":"과학","과목명":"물질과 에너지","과목유형":"진로 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":4,"id":"s1947ybo","제외":false},{"입학년도":"2026","교과군":"과학","과목명":"화학 반응의 세계","과목유형":"진로 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":5,"id":"s195nmhi","제외":false},{"입학년도":"2026","교과군":"과학","과목명":"세포와 물질대사","과목유형":"진로 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":4,"id":"s196i6vl","제외":false},{"입학년도":"2026","교과군":"과학","과목명":"지구시스템과학","과목유형":"진로 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":1,"id":"s197kajc","제외":false},{"입학년도":"2026","교과군":"기술·가정/정보","과목명":"인공지능 기초","과목유형":"진로 선택","이수구분":"선택군H 택1","학년":3,"학기":1,"주당시수":4,"예상개설반":3,"id":"s198c3vo","제외":false},{"입학년도":"2026","교과군":"제2외국어(일본어)","과목명":"일본어 회화","과목유형":"진로 선택","이수구분":"선택군H 택1","학년":3,"학기":1,"주당시수":4,"예상개설반":3,"id":"s199lrbc","제외":false},{"입학년도":"2026","교과군":"제2외국어(중국어)","과목명":"중국어 회화","과목유형":"진로 선택","이수구분":"선택군H 택1","학년":3,"학기":1,"주당시수":4,"예상개설반":1,"id":"s200ckba","제외":false},{"입학년도":"2026","교과군":"한문","과목명":"언어생활과 한자","과목유형":"융합 선택","이수구분":"선택군H 택1","학년":3,"학기":1,"주당시수":4,"예상개설반":1,"id":"s2010m2e","제외":false},{"입학년도":"2026","교과군":"교양","과목명":"논리와 사고","과목유형":"진로 선택","이수구분":"선택군H 택1","학년":3,"학기":1,"주당시수":4,"예상개설반":1,"id":"s202wkog","제외":false},{"입학년도":"2026","교과군":"국어","과목명":"독서 토론과 글쓰기","과목유형":"융합 선택","이수구분":"선택군I 택3","학년":3,"학기":2,"주당시수":3,"예상개설반":0,"id":"s203tm4y","제외":false},{"입학년도":"2026","교과군":"국어","과목명":"언어생활 탐구","과목유형":"융합 선택","이수구분":"선택군I 택3","학년":3,"학기":2,"주당시수":3,"예상개설반":8,"id":"s204xhce","제외":false},{"입학년도":"2026","교과군":"수학","과목명":"수학과제 탐구","과목유형":"융합 선택","이수구분":"선택군I 택3","학년":3,"학기":2,"주당시수":3,"예상개설반":6,"id":"s205g1fl","제외":false},{"입학년도":"2026","교과군":"영어","과목명":"심화 영어 독해와 작문","과목유형":"진로 선택","이수구분":"선택군I 택3","학년":3,"학기":2,"주당시수":3,"예상개설반":7,"id":"s206h6ds","제외":false},{"입학년도":"2026","교과군":"영어","과목명":"미디어 영어","과목유형":"융합 선택","이수구분":"선택군I 택3","학년":3,"학기":2,"주당시수":3,"예상개설반":7,"id":"s207r00t","제외":false},{"입학년도":"2026","교과군":"사회","과목명":"윤리문제 탐구","과목유형":"융합 선택","이수구분":"선택군J 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":0,"id":"s2089wiu","제외":false},{"입학년도":"2026","교과군":"사회","과목명":"여행지리","과목유형":"융합 선택","이수구분":"선택군J 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":5,"id":"s209tst5","제외":false},{"입학년도":"2026","교과군":"사회","과목명":"금융과 경제생활","과목유형":"융합 선택","이수구분":"선택군J 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":4,"id":"s210o6d0","제외":false},{"입학년도":"2026","교과군":"과학","과목명":"기후변화와 환경생태","과목유형":"융합 선택","이수구분":"선택군J 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":7,"id":"s211p4df","제외":false},{"입학년도":"2026","교과군":"과학","과목명":"과학의 역사와 문화","과목유형":"융합 선택","이수구분":"선택군J 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":6,"id":"s212hq7o","제외":false},{"입학년도":"2026","교과군":"과학","과목명":"융합과학 탐구","과목유형":"융합 선택","이수구분":"선택군J 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":6,"id":"s213fqk7","제외":false},{"입학년도":"2026","교과군":"기술·가정/정보","과목명":"소프트웨어와 생활","과목유형":"융합 선택","이수구분":"선택군K 택1","학년":3,"학기":2,"주당시수":4,"예상개설반":2,"id":"s214am0r","제외":false},{"입학년도":"2026","교과군":"제2외국어(일본어)","과목명":"심화 일본어","과목유형":"진로 선택","이수구분":"선택군K 택1","학년":3,"학기":2,"주당시수":4,"예상개설반":2,"id":"s2153tzx","제외":false},{"입학년도":"2026","교과군":"제2외국어(중국어)","과목명":"심화 중국어","과목유형":"진로 선택","이수구분":"선택군K 택1","학년":3,"학기":2,"주당시수":4,"예상개설반":1,"id":"s216gxfa","제외":false},{"입학년도":"2026","교과군":"한문","과목명":"한문 고전 읽기","과목유형":"진로 선택","이수구분":"선택군K 택1","학년":3,"학기":2,"주당시수":4,"예상개설반":1,"id":"s217t2j2","제외":false},{"입학년도":"2026","교과군":"교양","과목명":"인간과 심리","과목유형":"진로 선택","이수구분":"선택군K 택1","학년":3,"학기":2,"주당시수":4,"예상개설반":5,"id":"s218qv9v","제외":false},{"입학년도":"2026","교과군":"교양","과목명":"논술","과목유형":"융합 선택","이수구분":"선택군K 택1","학년":3,"학기":2,"주당시수":4,"예상개설반":1,"id":"s219b69n","제외":false}],"s27":[{"입학년도":"2027","교과군":"국어","과목명":"공통국어1","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":1,"주당시수":3,"예상개설반":13,"id":"s2200mxg","제외":false},{"입학년도":"2027","교과군":"국어","과목명":"공통국어2","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":2,"주당시수":3,"예상개설반":13,"id":"s221c63r","제외":false},{"입학년도":"2027","교과군":"국어","과목명":"문학","과목유형":"일반 선택","이수구분":"지정","학년":2,"학기":1,"주당시수":4,"예상개설반":13,"id":"s2227w3q","제외":false},{"입학년도":"2027","교과군":"국어","과목명":"화법과 언어","과목유형":"일반 선택","이수구분":"지정","학년":2,"학기":2,"주당시수":4,"예상개설반":13,"id":"s2232aac","제외":false},{"입학년도":"2027","교과군":"국어","과목명":"독서와 작문","과목유형":"일반 선택","이수구분":"지정","학년":3,"학기":1,"주당시수":4,"예상개설반":13,"id":"s22422vf","제외":false},{"입학년도":"2027","교과군":"수학","과목명":"공통수학1","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":1,"주당시수":3,"예상개설반":13,"id":"s225jil7","제외":false},{"입학년도":"2027","교과군":"수학","과목명":"공통수학2","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":2,"주당시수":3,"예상개설반":13,"id":"s2265igc","제외":false},{"입학년도":"2027","교과군":"수학","과목명":"대수","과목유형":"일반 선택","이수구분":"지정","학년":2,"학기":1,"주당시수":4,"예상개설반":13,"id":"s22701yz","제외":false},{"입학년도":"2027","교과군":"수학","과목명":"미적분Ⅰ","과목유형":"일반 선택","이수구분":"지정","학년":2,"학기":2,"주당시수":4,"예상개설반":13,"id":"s228yare","제외":false},{"입학년도":"2027","교과군":"수학","과목명":"확률과 통계","과목유형":"일반 선택","이수구분":"지정","학년":2,"학기":2,"주당시수":3,"예상개설반":13,"id":"s22960ie","제외":false},{"입학년도":"2027","교과군":"영어","과목명":"공통영어1","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":1,"주당시수":3,"예상개설반":13,"id":"s230jl0u","제외":false},{"입학년도":"2027","교과군":"영어","과목명":"공통영어2","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":2,"주당시수":3,"예상개설반":13,"id":"s2310dnw","제외":false},{"입학년도":"2027","교과군":"영어","과목명":"영어Ⅰ","과목유형":"일반 선택","이수구분":"지정","학년":2,"학기":1,"주당시수":4,"예상개설반":13,"id":"s232p82t","제외":false},{"입학년도":"2027","교과군":"영어","과목명":"영어Ⅱ","과목유형":"일반 선택","이수구분":"지정","학년":2,"학기":2,"주당시수":4,"예상개설반":13,"id":"s233a0pu","제외":false},{"입학년도":"2027","교과군":"영어","과목명":"영어 독해와 작문","과목유형":"일반 선택","이수구분":"지정","학년":3,"학기":1,"주당시수":4,"예상개설반":13,"id":"s23439kd","제외":false},{"입학년도":"2027","교과군":"사회","과목명":"한국사1","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":1,"주당시수":3,"예상개설반":13,"id":"s2354oxh","제외":false},{"입학년도":"2027","교과군":"사회","과목명":"한국사2","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":2,"주당시수":3,"예상개설반":13,"id":"s236yfpm","제외":false},{"입학년도":"2027","교과군":"사회","과목명":"통합사회1","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":1,"주당시수":4,"예상개설반":13,"id":"s237p9mf","제외":false},{"입학년도":"2027","교과군":"사회","과목명":"통합사회2","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":2,"주당시수":4,"예상개설반":13,"id":"s2388myl","제외":false},{"입학년도":"2027","교과군":"과학","과목명":"통합과학1","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":1,"주당시수":4,"예상개설반":13,"id":"s239f8w5","제외":false},{"입학년도":"2027","교과군":"과학","과목명":"통합과학2","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":2,"주당시수":4,"예상개설반":13,"id":"s2402x7f","제외":false},{"입학년도":"2027","교과군":"과학","과목명":"과학탐구실험1","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":1,"주당시수":1,"예상개설반":13,"id":"s241gj9q","제외":false},{"입학년도":"2027","교과군":"과학","과목명":"과학탐구실험2","과목유형":"공통 과목","이수구분":"지정","학년":1,"학기":2,"주당시수":1,"예상개설반":13,"id":"s242hdpo","제외":false},{"입학년도":"2027","교과군":"체육","과목명":"체육1","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":1,"주당시수":2,"예상개설반":13,"id":"s243z2bd","제외":false},{"입학년도":"2027","교과군":"체육","과목명":"체육2","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":2,"주당시수":2,"예상개설반":13,"id":"s2441j21","제외":false},{"입학년도":"2027","교과군":"체육","과목명":"스포츠 생활1","과목유형":"융합 선택","이수구분":"지정","학년":2,"학기":1,"주당시수":2,"예상개설반":13,"id":"s245ofp6","제외":false},{"입학년도":"2027","교과군":"체육","과목명":"스포츠 생활2","과목유형":"융합 선택","이수구분":"지정","학년":2,"학기":2,"주당시수":2,"예상개설반":13,"id":"s246jw7b","제외":false},{"입학년도":"2027","교과군":"체육","과목명":"스포츠 문화","과목유형":"진로 선택","이수구분":"지정","학년":3,"학기":1,"주당시수":1,"예상개설반":13,"id":"s247guxr","제외":false},{"입학년도":"2027","교과군":"체육","과목명":"스포츠 과학","과목유형":"진로 선택","이수구분":"지정","학년":3,"학기":2,"주당시수":1,"예상개설반":13,"id":"s248odty","제외":false},{"입학년도":"2027","교과군":"예술(음악)","과목명":"음악","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":1,"주당시수":3,"예상개설반":6,"id":"s249bbsr","제외":false},{"입학년도":"2027","교과군":"예술(음악)","과목명":"음악","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":2,"주당시수":3,"예상개설반":7,"id":"s2505cbb","제외":false},{"입학년도":"2027","교과군":"예술(미술)","과목명":"미술","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":1,"주당시수":3,"예상개설반":7,"id":"s251csd8","제외":false},{"입학년도":"2027","교과군":"예술(미술)","과목명":"미술","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":2,"주당시수":3,"예상개설반":6,"id":"s252jqvq","제외":false},{"입학년도":"2027","교과군":"예술(음악)","과목명":"음악 연주와 창작","과목유형":"진로 선택","이수구분":"지정","학년":3,"학기":1,"주당시수":2,"예상개설반":7,"id":"s25324te","제외":false},{"입학년도":"2027","교과군":"예술(음악)","과목명":"음악 연주와 창작","과목유형":"진로 선택","이수구분":"지정","학년":3,"학기":2,"주당시수":2,"예상개설반":6,"id":"s2544mza","제외":false},{"입학년도":"2027","교과군":"예술(미술)","과목명":"미술 창작","과목유형":"진로 선택","이수구분":"지정","학년":3,"학기":1,"주당시수":2,"예상개설반":6,"id":"s255w8fl","제외":false},{"입학년도":"2027","교과군":"예술(미술)","과목명":"미술 창작","과목유형":"진로 선택","이수구분":"지정","학년":3,"학기":2,"주당시수":2,"예상개설반":7,"id":"s256q1r9","제외":false},{"입학년도":"2027","교과군":"기술·가정/정보","과목명":"정보","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":1,"주당시수":3,"예상개설반":6,"id":"s257jgbm","제외":false},{"입학년도":"2027","교과군":"기술·가정/정보","과목명":"정보","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":2,"주당시수":3,"예상개설반":7,"id":"s2582r6y","제외":false},{"입학년도":"2027","교과군":"한문","과목명":"한문","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":1,"주당시수":3,"예상개설반":7,"id":"s259lqim","제외":false},{"입학년도":"2027","교과군":"한문","과목명":"한문","과목유형":"일반 선택","이수구분":"지정","학년":1,"학기":2,"주당시수":3,"예상개설반":6,"id":"s26093xu","제외":false},{"입학년도":"2027","교과군":"국어","과목명":"주제 탐구 독서","과목유형":"진로 선택","이수구분":"선택군A 택1","학년":2,"학기":1,"주당시수":3,"예상개설반":6,"id":"s261d313","제외":false},{"입학년도":"2027","교과군":"수학","과목명":"기하","과목유형":"진로 선택","이수구분":"선택군A 택1","학년":2,"학기":1,"주당시수":3,"예상개설반":6,"id":"s2626lcg","제외":false},{"입학년도":"2027","교과군":"영어","과목명":"영어 발표와 토론","과목유형":"진로 선택","이수구분":"선택군A 택1","학년":2,"학기":1,"주당시수":3,"예상개설반":1,"id":"s2633hqt","제외":false},{"입학년도":"2027","교과군":"사회","과목명":"세계시민과 지리","과목유형":"일반 선택","이수구분":"선택군B 택3","학년":2,"학기":1,"주당시수":3,"예상개설반":3,"id":"s264d68q","제외":false},{"입학년도":"2027","교과군":"사회","과목명":"세계사","과목유형":"일반 선택","이수구분":"선택군B 택3","학년":2,"학기":1,"주당시수":3,"예상개설반":4,"id":"s265jrxc","제외":false},{"입학년도":"2027","교과군":"사회","과목명":"사회와 문화","과목유형":"일반 선택","이수구분":"선택군B 택3","학년":2,"학기":1,"주당시수":3,"예상개설반":7,"id":"s266i3pd","제외":false},{"입학년도":"2027","교과군":"사회","과목명":"현대사회와 윤리","과목유형":"일반 선택","이수구분":"선택군B 택3","학년":2,"학기":1,"주당시수":3,"예상개설반":7,"id":"s2676nvf","제외":false},{"입학년도":"2027","교과군":"과학","과목명":"물리학","과목유형":"일반 선택","이수구분":"선택군B 택3","학년":2,"학기":1,"주당시수":3,"예상개설반":6,"id":"s268d5q6","제외":false},{"입학년도":"2027","교과군":"과학","과목명":"지구과학","과목유형":"일반 선택","이수구분":"선택군B 택3","학년":2,"학기":1,"주당시수":3,"예상개설반":5,"id":"s26921oh","제외":false},{"입학년도":"2027","교과군":"과학","과목명":"화학","과목유형":"일반 선택","이수구분":"선택군B 택3","학년":2,"학기":1,"주당시수":3,"예상개설반":6,"id":"s270z1ah","제외":false},{"입학년도":"2027","교과군":"제2외국어(일본어)","과목명":"일본어","과목유형":"일반 선택","이수구분":"선택군C 택1","학년":2,"학기":1,"주당시수":3,"예상개설반":9,"id":"s271ptse","제외":false},{"입학년도":"2027","교과군":"제2외국어(중국어)","과목명":"중국어","과목유형":"일반 선택","이수구분":"선택군C 택1","학년":2,"학기":1,"주당시수":3,"예상개설반":3,"id":"s272o7ar","제외":false},{"입학년도":"2027","교과군":"사회","과목명":"한국지리 탐구","과목유형":"진로 선택","이수구분":"선택군D 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":2,"id":"s273e1gw","제외":false},{"입학년도":"2027","교과군":"사회","과목명":"윤리와 사상","과목유형":"진로 선택","이수구분":"선택군D 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":7,"id":"s27498lf","제외":false},{"입학년도":"2027","교과군":"사회","과목명":"법과 사회","과목유형":"진로 선택","이수구분":"선택군D 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":5,"id":"s27521hy","제외":false},{"입학년도":"2027","교과군":"사회","과목명":"정치","과목유형":"진로 선택","이수구분":"선택군D 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":3,"id":"s27680e5","제외":false},{"입학년도":"2027","교과군":"사회","과목명":"동아시아 역사 기행","과목유형":"진로 선택","이수구분":"선택군D 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":2,"id":"s277pcdd","제외":false},{"입학년도":"2027","교과군":"과학","과목명":"생명과학","과목유형":"일반 선택","이수구분":"선택군D 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":6,"id":"s278om5l","제외":false},{"입학년도":"2027","교과군":"과학","과목명":"역학과 에너지","과목유형":"진로 선택","이수구분":"선택군D 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":4,"id":"s2793l1n","제외":false},{"입학년도":"2027","교과군":"과학","과목명":"생물의 유전","과목유형":"진로 선택","이수구분":"선택군D 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":5,"id":"s2802xwb","제외":false},{"입학년도":"2027","교과군":"과학","과목명":"행성우주과학","과목유형":"진로 선택","이수구분":"선택군D 택3","학년":2,"학기":2,"주당시수":3,"예상개설반":1,"id":"s2819i80","제외":false},{"입학년도":"2027","교과군":"제2외국어(일본어)","과목명":"일본 문화","과목유형":"융합 선택","이수구분":"선택군E 택1","학년":2,"학기":2,"주당시수":3,"예상개설반":9,"id":"s282a1np","제외":false},{"입학년도":"2027","교과군":"제2외국어(중국어)","과목명":"중국 문화","과목유형":"융합 선택","이수구분":"선택군E 택1","학년":2,"학기":2,"주당시수":3,"예상개설반":3,"id":"s283rkwp","제외":false},{"입학년도":"2027","교과군":"국어","과목명":"문학과 영상","과목유형":"진로 선택","이수구분":"선택군F 택1","학년":3,"학기":1,"주당시수":3,"예상개설반":6,"id":"s2840hhi","제외":false},{"입학년도":"2027","교과군":"수학","과목명":"미적분Ⅱ","과목유형":"진로 선택","이수구분":"선택군F 택1","학년":3,"학기":1,"주당시수":3,"예상개설반":6,"id":"s285cgi4","제외":false},{"입학년도":"2027","교과군":"수학","과목명":"경제 수학","과목유형":"진로 선택","이수구분":"선택군F 택1","학년":3,"학기":1,"주당시수":3,"예상개설반":1,"id":"s286eik9","제외":false},{"입학년도":"2027","교과군":"영어","과목명":"심화 영어","과목유형":"진로 선택","이수구분":"선택군F 택1","학년":3,"학기":1,"주당시수":3,"예상개설반":1,"id":"s287qpg9","제외":false},{"입학년도":"2027","교과군":"수학","과목명":"인공지능 수학","과목유형":"진로 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":3,"id":"s288u2lj","제외":false},{"입학년도":"2027","교과군":"사회","과목명":"도시의 미래 탐구","과목유형":"진로 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":4,"id":"s289726d","제외":false},{"입학년도":"2027","교과군":"사회","과목명":"경제","과목유형":"진로 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":1,"id":"s290xdbc","제외":false},{"입학년도":"2027","교과군":"사회","과목명":"인문학과 윤리","과목유형":"진로 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":2,"id":"s291vgys","제외":false},{"입학년도":"2027","교과군":"사회","과목명":"국제 관계의 이해","과목유형":"진로 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":4,"id":"s292kdbn","제외":false},{"입학년도":"2027","교과군":"사회","과목명":"역사로 탐구하는 현대 세계","과목유형":"융합 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":3,"id":"s2930i2c","제외":false},{"입학년도":"2027","교과군":"사회","과목명":"사회문제 탐구","과목유형":"융합 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":2,"id":"s294or4r","제외":false},{"입학년도":"2027","교과군":"사회","과목명":"기후변화와 지속가능한 세계","과목유형":"융합 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":2,"id":"s295wbu5","제외":false},{"입학년도":"2027","교과군":"과학","과목명":"전자기와 양자","과목유형":"진로 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":2,"id":"s296e7zv","제외":false},{"입학년도":"2027","교과군":"과학","과목명":"물질과 에너지","과목유형":"진로 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":4,"id":"s297cj2q","제외":false},{"입학년도":"2027","교과군":"과학","과목명":"화학 반응의 세계","과목유형":"진로 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":5,"id":"s2980sig","제외":false},{"입학년도":"2027","교과군":"과학","과목명":"세포와 물질대사","과목유형":"진로 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":4,"id":"s299ahjw","제외":false},{"입학년도":"2027","교과군":"과학","과목명":"지구시스템과학","과목유형":"진로 선택","이수구분":"선택군G 택4","학년":3,"학기":1,"주당시수":3,"예상개설반":1,"id":"s300rcac","제외":false},{"입학년도":"2027","교과군":"기술·가정/정보","과목명":"인공지능 기초","과목유형":"진로 선택","이수구분":"선택군H 택1","학년":3,"학기":1,"주당시수":3,"예상개설반":6,"id":"s301ab02","제외":false},{"입학년도":"2027","교과군":"제2외국어(일본어)","과목명":"일본어 회화","과목유형":"진로 선택","이수구분":"선택군H 택1","학년":3,"학기":1,"주당시수":3,"예상개설반":4,"id":"s3024pby","제외":false},{"입학년도":"2027","교과군":"제2외국어(중국어)","과목명":"중국어 회화","과목유형":"진로 선택","이수구분":"선택군H 택1","학년":3,"학기":1,"주당시수":3,"예상개설반":2,"id":"s303ctyh","제외":false},{"입학년도":"2027","교과군":"한문","과목명":"언어생활과 한자","과목유형":"융합 선택","이수구분":"선택군H 택1","학년":3,"학기":1,"주당시수":3,"예상개설반":1,"id":"s304s42l","제외":false},{"입학년도":"2027","교과군":"교양","과목명":"논리와 사고","과목유형":"진로 선택","이수구분":"선택군H 택1","학년":3,"학기":1,"주당시수":2,"예상개설반":0,"id":"s3057h1b","제외":false},{"입학년도":"2027","교과군":"국어","과목명":"독서 토론과 글쓰기","과목유형":"융합 선택","이수구분":"선택군I 택3","학년":3,"학기":2,"주당시수":3,"예상개설반":6,"id":"s306afop","제외":false},{"입학년도":"2027","교과군":"국어","과목명":"언어생활 탐구","과목유형":"융합 선택","이수구분":"선택군I 택3","학년":3,"학기":2,"주당시수":3,"예상개설반":7,"id":"s3077i93","제외":false},{"입학년도":"2027","교과군":"수학","과목명":"수학과제 탐구","과목유형":"융합 선택","이수구분":"선택군I 택3","학년":3,"학기":2,"주당시수":3,"예상개설반":13,"id":"s308v64v","제외":false},{"입학년도":"2027","교과군":"영어","과목명":"심화 영어 독해와 작문","과목유형":"진로 선택","이수구분":"선택군I 택3","학년":3,"학기":2,"주당시수":3,"예상개설반":6,"id":"s309rkqy","제외":false},{"입학년도":"2027","교과군":"영어","과목명":"미디어 영어","과목유형":"융합 선택","이수구분":"선택군I 택3","학년":3,"학기":2,"주당시수":3,"예상개설반":7,"id":"s310xdcq","제외":false},{"입학년도":"2027","교과군":"사회","과목명":"윤리문제 탐구","과목유형":"융합 선택","이수구분":"선택군J 택4","학년":3,"학기":2,"주당시수":4,"예상개설반":6,"id":"s311ux29","제외":false},{"입학년도":"2027","교과군":"사회","과목명":"여행지리","과목유형":"융합 선택","이수구분":"선택군J 택4","학년":3,"학기":2,"주당시수":4,"예상개설반":6,"id":"s3126a0e","제외":false},{"입학년도":"2027","교과군":"사회","과목명":"금융과 경제생활","과목유형":"융합 선택","이수구분":"선택군J 택4","학년":3,"학기":2,"주당시수":4,"예상개설반":6,"id":"s313gebq","제외":false},{"입학년도":"2027","교과군":"과학","과목명":"기후변화와 환경생태","과목유형":"융합 선택","이수구분":"선택군J 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":6,"id":"s314dnpo","제외":false},{"입학년도":"2027","교과군":"과학","과목명":"과학의 역사와 문화","과목유형":"융합 선택","이수구분":"선택군J 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":6,"id":"s315eanc","제외":false},{"입학년도":"2027","교과군":"과학","과목명":"융합과학 탐구","과목유형":"융합 선택","이수구분":"선택군J 택4","학년":3,"학기":2,"주당시수":3,"예상개설반":6,"id":"s316ghr6","제외":false},{"입학년도":"2027","교과군":"기술·가정/정보","과목명":"소프트웨어와 생활","과목유형":"융합 선택","이수구분":"선택군K 택1","학년":3,"학기":2,"주당시수":3,"예상개설반":6,"id":"s317so67","제외":false},{"입학년도":"2027","교과군":"제2외국어(일본어)","과목명":"심화 일본어","과목유형":"진로 선택","이수구분":"선택군K 택1","학년":3,"학기":2,"주당시수":3,"예상개설반":4,"id":"s318qlfh","제외":false},{"입학년도":"2027","교과군":"제2외국어(중국어)","과목명":"심화 중국어","과목유형":"진로 선택","이수구분":"선택군K 택1","학년":3,"학기":2,"주당시수":3,"예상개설반":2,"id":"s319xmer","제외":false},{"입학년도":"2027","교과군":"한문","과목명":"한문 고전 읽기","과목유형":"진로 선택","이수구분":"선택군K 택1","학년":3,"학기":2,"주당시수":3,"예상개설반":1,"id":"s320zbhc","제외":false},{"입학년도":"2027","교과군":"교양","과목명":"인간과 심리","과목유형":"진로 선택","이수구분":"선택군K 택1","학년":3,"학기":2,"주당시수":2,"예상개설반":6,"id":"s321j5u8","제외":false},{"입학년도":"2027","교과군":"교양","과목명":"논술","과목유형":"융합 선택","이수구분":"선택군K 택1","학년":3,"학기":2,"주당시수":2,"예상개설반":7,"id":"s322xo4b","제외":false}],"div":23,"cs":4,"eg":[],"tc":{"국어":10,"수학":10,"영어":10,"사회":12,"과학":11,"체육":4,"예술(미술)":2,"예술(음악)":2,"기술·가정/정보":2,"제2외국어(일본어)":2,"제2외국어(중국어)":1,"한문":3,"교양":0},"savedAt":"2026-06-22T11:49:50.892Z"};
+let mutable2025=[], mutable2026=[], subjects2027=[], completedStep=1, excludedGroups=new Set();
+
+function freshArrays(){
+  mutable2025 = BASE_2025_RAW.map(s=>({...s,id:uid(),제외:false}));
+  mutable2026 = BASE_2026_RAW.map(s=>({...s,id:uid(),제외:false}));
+  subjects2027 = BASE_2026_RAW.map(s=>({...s,입학년도:"2027",id:uid(),제외:false}));
+  excludedGroups = new Set();
+  teacherCounts = {...DEFAULT_TEACHERS};
+  applyChoiceClasses(mutable2025); applyChoiceClasses(mutable2026); applyChoiceClasses(subjects2027);
+}
+function applyStateObj(d){
+  mutable2025=d.m25; mutable2026=d.m26; subjects2027=d.s27;
+  classDivisor=d.div||23; completedStep=d.cs||1;
+  excludedGroups=new Set(d.eg||[]); teacherCounts={...DEFAULT_TEACHERS,...(d.tc||{})};
+}
+function loadState(){
+  try{ const d=JSON.parse(localStorage.getItem(KEY)); if(d&&d.ver===VER){ applyStateObj(d); return; } }catch(e){}
+  if(EMBEDDED_STATE){ applyStateObj(EMBEDDED_STATE); saveState(); return; }
+  freshArrays(); saveState();
+}
+function currentStateObj(){
+  return {ver:VER, m25:mutable2025, m26:mutable2026, s27:subjects2027, div:classDivisor, cs:completedStep, eg:[...excludedGroups], tc:teacherCounts, savedAt:new Date().toISOString()};
+}
+function exportState(){
+  const blob=new Blob([JSON.stringify(currentStateObj(),null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob), a=document.createElement("a"), p=n=>String(n).padStart(2,"0"), d=new Date();
+  a.href=url; a.download="교육과정_편제_"+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+".json";
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+function importState(file){
+  const rd=new FileReader();
+  rd.onload=()=>{ try{ const d=JSON.parse(rd.result);
+    if(!d || !d.s27 || !d.m25 || !d.m26){ alert("올바른 편제 파일이 아닙니다."); return; }
+    applyStateObj(d); baseViewGroups=null; saveState();
+    alert("불러오기 완료! 편집 내용이 적용되었습니다."); goStep(1);
+  }catch(e){ alert("파일을 읽을 수 없습니다: "+e.message); } };
+  rd.readAsText(file);
+}
+function saveState(){ localStorage.setItem(KEY, JSON.stringify({ver:VER,m25:mutable2025,m26:mutable2026,s27:subjects2027,div:classDivisor,cs:completedStep,eg:[...excludedGroups],tc:teacherCounts})); }
+function resetAll(){ if(confirm("모든 편집 내용을 초기 상태로 되돌립니다. 진행할까요?")){ classDivisor=23; completedStep=1; excludedGroups=new Set(); teacherCounts={...DEFAULT_TEACHERS}; freshArrays(); saveState(); goStep(1); } }
+
+// ================= cohort 매핑 =================
+// (운영연도, 학년) → 해당 입학생 교육과정 배열
+function cohortSource(year, grade){
+  if(year===2027){ if(grade===3) return mutable2025; if(grade===2) return mutable2026; return subjects2027; }
+  if(year===2028){ if(grade===3) return mutable2026; return subjects2027; }
+  return subjects2027; // 2029
+}
+function cohortLabel(year, grade){
+  const src=cohortSource(year,grade);
+  if(src===mutable2025) return "2025학년도 입학생 과정";
+  if(src===mutable2026) return "2026학년도 입학생 과정";
+  return "2027학년도 교육과정";
+}
+function cohortSubjects(year, grade){ return cohortSource(year,grade).filter(s=>s.학년===grade && !s.제외 && !excludedGroups.has(s.교과군)); }
+function findById(id){ for(const arr of [mutable2025,mutable2026,subjects2027]){ const o=arr.find(s=>s.id===id); if(o) return o; } return null; }
+function deleteById(id){ for(const arr of [mutable2025,mutable2026,subjects2027]){ const i=arr.findIndex(s=>s.id===id); if(i>=0){ arr.splice(i,1); return; } } }
+
+// ================= 정렬 =================
+function sortSubs(a,b){
+  if(a.학기!==b.학기) return a.학기-b.학기;
+  const g=cmpGroup(a.교과군,b.교과군); if(g!==0) return g;
+  const ad=a.이수구분==="지정"?0:1, bd=b.이수구분==="지정"?0:1; if(ad!==bd) return ad-bd;
+  return a.과목명.localeCompare(b.과목명);
+}
+
+// ================= STEP 1 : 과목 선택 =================
+function renderStep1(){
+  const el=document.getElementById("panel-1");
+  const allGroups=교과군_정렬순서.filter(g=>[mutable2025,mutable2026,subjects2027].some(a=>a.some(s=>s.교과군===g)));
+  const onCnt=allGroups.filter(g=>!excludedGroups.has(g)).length;
+  let h='<div class="intro">📝 <b>1단계 · 교과(군) 선택</b><br>'+
+    '운영할 교과군을 눌러 선택하세요. <b>파란색으로 켜진 교과군</b>의 과목만 다음 단계 예상 시수에 들어갑니다. '+
+    '각 타일의 <b>과목 보기</b>를 누르면 그 교과군의 과목(선택군 포함)을 확인할 수 있어요.'+
+    '<span class="reset-link" id="resetLink1">↻ 전체 초기화</span></div>';
+  h+='<div class="bulk-row"><button class="btn ghost sm" data-act="selectall">✓ 전체 선택</button>'+
+     '<button class="btn ghost sm" data-act="deselectall">✕ 전체 해제</button>'+
+     '<span class="hint">현재 '+onCnt+' / '+allGroups.length+' 교과군 선택됨</span></div>';
+  h+='<div class="tile-grid">';
+  allGroups.forEach(g=>{
+    const on=!excludedGroups.has(g);
+    const cnt=subjects2027.filter(s=>s.교과군===g).length;
+    h+='<div class="tile '+(on?'on':'')+'" data-act="grouptile" data-group="'+escapeHtml(g)+'">'+
+       '<div class="tile-check">✓</div><div class="tile-cnt">'+cnt+'과목</div>'+
+       '<div class="tile-name">'+g+'</div>'+
+       '<button class="tile-view" data-act="viewgroup" data-group="'+escapeHtml(g)+'">과목 보기</button></div>';
+  });
+  h+='</div>';
+  h+='<div class="nav-row"><span></span><button class="btn green" data-act="next" data-to="2">2단계: 2027학년도 시수 확인 →</button></div>';
+  el.innerHTML=h;
+}
+
+// ================= STEP 2~4 : 연도별 시수 =================
+function renderYear(step){
+  const year = 2025+step; // step2->2027
+  const el=document.getElementById("panel-"+step);
+  let h='<div class="intro">📊 <b>'+step+'단계 · '+year+'학년도 예상 시수</b><br>'+
+    '학년별 개설 과목입니다. 옆에 <b>실제 선택 인원</b>이 표시되고, 그 인원으로 <b>예상 개설반</b>이 자동 계산되어 있습니다('+classDivisor+'명당 1반). '+
+    '<b>주당시수</b>와 <b>개설반</b>은 직접 고칠 수 있고, 과목 추가·삭제도 가능합니다. 맨 아래에서 '+year+'학년도 예상 시수 총괄을 확인하세요.';
+  if(year>2027) h+='<br><span style="color:#6b7280">※ '+year+'학년도 상급생의 선택 인원은 아직 확정 전이라, 현재 선택 패턴을 적용한 <b>예상치</b>입니다.</span>';
+  h+='</div>';
+
+  h+='<div class="divbar">⚙️ 선택과목 개설반 기준: 선택 <input type="number" id="divInput" value="'+classDivisor+'" min="5" max="40" style="width:54px"> 명당 1개반 '+
+     '<button class="btn sm" data-act="recalc">이 기준으로 개설반 재산정</button> <b>(직접 수정한 값도 다시 계산됩니다)</b></div>';
+
+  [1,2,3].forEach(grade=>{
+    const subs = cohortSubjects(year,grade).sort(sortSubs);
+    let gradeWeek=0; subs.forEach(s=>gradeWeek+=s.주당시수*s.예상개설반);
+    h+='<div class="grade-card"><div class="card-head"><h3>'+grade+'학년 <span class="sub">'+cohortLabel(year,grade)+' · 주간시수 합계 <b style="color:#1e40af">'+gradeWeek+'</b></span></h3>'+
+      '<button class="btn ghost sm" data-act="add" data-year="'+year+'" data-grade="'+grade+'">+ 과목 추가</button></div>'+
+      '<table><thead><tr><th style="width:90px">교과군</th><th>과목명</th><th style="width:60px">유형</th><th style="width:46px">학기</th>'+
+      '<th style="width:90px">선택인원</th><th style="width:70px">주당시수</th><th style="width:64px">개설반</th><th style="width:74px">주간시수</th><th style="width:56px">삭제</th></tr></thead><tbody>';
+    if(subs.length===0) h+='<tr><td colspan="9" style="color:#9ca3af;padding:14px">개설 과목 없음</td></tr>';
+    subs.forEach(s=>{
+      const c=choiceOf(s); const est=(year>2027||c==null);
+      h+='<tr>'+
+        '<td style="color:#6b7280">'+escapeHtml(s.교과군)+'</td>'+
+        '<td class="left">'+escapeHtml(s.과목명)+' '+reqHtml(s)+'</td>'+
+        '<td><span class="badge '+s.과목유형.substring(0,2)+'">'+s.과목유형.substring(0,2)+'</span></td>'+
+        '<td>'+s.학기+'</td>'+
+        '<td>'+(c==null?'<span style="color:#cbd5e1">—</span>':'<span class="choice-num'+(est?' est':'')+'">'+c+'명'+(est&&year>2027?'<sup>예상</sup>':'')+'</span>')+'</td>'+
+        '<td><input type="number" data-id="'+s.id+'" data-field="주당시수" value="'+s.주당시수+'" min="0"></td>'+
+        '<td><input type="number" data-id="'+s.id+'" data-field="예상개설반" value="'+s.예상개설반+'" min="0"></td>'+
+        '<td class="week" data-week="'+s.id+'">'+(s.주당시수*s.예상개설반)+'</td>'+
+        '<td><button class="btn-del" data-act="del" data-id="'+s.id+'">삭제</button></td></tr>';
+    });
+    h+='</tbody></table></div>';
+  });
+
+  h+=teacherEditorHTML();
+  h+='<div class="summary" id="summary-'+step+'"></div>';
+  const prev = step>2 ? '<button class="btn ghost" data-act="prev" data-to="'+(step-1)+'">← '+(step-1)+'단계</button>' : '<button class="btn ghost" data-act="prev" data-to="1">← 1단계</button>';
+  const nextBtn = step<4 ? '<button class="btn green" data-act="next" data-to="'+(step+1)+'">'+(step+1)+'단계: '+(year+1)+'학년도 →</button>'
+                         : '<button class="btn green" data-act="next" data-to="5">5단계: 연도별 변화 한눈에 보기 →</button>';
+  h+='<div class="nav-row">'+prev+nextBtn+'</div>';
+  el.innerHTML=h;
+  renderSummary(step, year);
+}
+
+function summaryData(year){
+  const mk=(sem)=>{ const res={};
+    for(let g=1;g<=3;g++){ cohortSubjects(year,g).filter(s=>s.학기===sem).forEach(s=>{
+      const w=s.주당시수*s.예상개설반; if(!res[s.교과군]) res[s.교과군]={g1:0,g2:0,g3:0,total:0};
+      res[s.교과군]["g"+g]+=w; res[s.교과군].total+=w; }); }
+    return res; };
+  return {1:mk(1),2:mk(2)};
+}
+function teacherEditorHTML(){
+  const allG=교과군_정렬순서.filter(g=>[mutable2025,mutable2026,subjects2027].some(a=>a.some(x=>x.교과군===g)));
+  return '<details class="tch-edit" open><summary>👩‍🏫 교과군별 교사 수 입력 (평균 시수 계산 기준 — 여기서 직접 수정)</summary><div class="tch-grid">'+
+    allG.map(g=>'<label>'+g+'<input type="number" min="0" data-teacher="'+escapeHtml(g)+'" value="'+teacherOf(g)+'"></label>').join('')+'</div></details>';
+}
+
+function renderSummary(step, year){
+  const box=document.getElementById("summary-"+step); if(!box) return;
+  const data=summaryData(year);
+  const groups=교과군_정렬순서.filter(g=>data[1][g]||data[2][g]);
+  let rows='', T={s1g1:0,s1g2:0,s1g3:0,s1t:0,s2g1:0,s2g2:0,s2g3:0,s2t:0,tch:0};
+  groups.forEach(g=>{
+    const a=data[1][g]||{g1:0,g2:0,g3:0,total:0}, b=data[2][g]||{g1:0,g2:0,g3:0,total:0}, tc=teacherOf(g);
+    T.s1g1+=a.g1;T.s1g2+=a.g2;T.s1g3+=a.g3;T.s1t+=a.total;
+    T.s2g1+=b.g1;T.s2g2+=b.g2;T.s2g3+=b.g3;T.s2t+=b.total;T.tch+=tc;
+    rows+='<tr><td class="left">'+g+'</td><td style="color:#6b7280">'+(tc||'—')+'</td>'+
+      '<td class="s1">'+(a.g1||'')+'</td><td class="s1">'+(a.g2||'')+'</td><td class="s1">'+(a.g3||'')+'</td><td class="s1 week">'+(a.total||'')+'</td><td class="s1" style="color:#1e40af;font-weight:700">'+avgFmt(a.total,g)+'</td>'+
+      '<td class="s2">'+(b.g1||'')+'</td><td class="s2">'+(b.g2||'')+'</td><td class="s2">'+(b.g3||'')+'</td><td class="s2 week">'+(b.total||'')+'</td><td class="s2" style="color:#166534;font-weight:700">'+avgFmt(b.total,g)+'</td>'+'<td class="comb" style="color:#7c3aed;font-weight:800">'+(tc>0?((a.total+b.total)/(2*tc)).toFixed(1):'—')+'</td></tr>';
+  });
+  const avg1=T.tch>0?(T.s1t/T.tch).toFixed(1):'—', avg2=T.tch>0?(T.s2t/T.tch).toFixed(1):'—', combAll=T.tch>0?((T.s1t+T.s2t)/(2*T.tch)).toFixed(1):'—', grand=T.s1t+T.s2t;
+  box.innerHTML='<h3>📌 '+year+'학년도 예상 시수 총괄 (주간시수 = 주당시수 × 개설반)</h3>'+
+    '<div style="overflow-x:auto"><table class="sumwide"><thead>'+
+    '<tr><th rowspan="2">교과군</th><th rowspan="2">교사수</th><th colspan="5" class="s1">1학기</th><th colspan="5" class="s2">2학기</th><th rowspan="2" class="comb">1·2학기<br>평균</th></tr>'+
+    '<tr><th class="s1">1학년</th><th class="s1">2학년</th><th class="s1">3학년</th><th class="s1">소계</th><th class="s1">평균</th>'+
+    '<th class="s2">1학년</th><th class="s2">2학년</th><th class="s2">3학년</th><th class="s2">소계</th><th class="s2">평균</th></tr></thead><tbody>'+
+    rows+
+    '<tr class="totrow"><td>합계</td><td>'+T.tch+'</td>'+
+    '<td>'+T.s1g1+'</td><td>'+T.s1g2+'</td><td>'+T.s1g3+'</td><td class="week">'+T.s1t+'</td><td style="color:#1e40af">'+avg1+'</td>'+
+    '<td>'+T.s2g1+'</td><td>'+T.s2g2+'</td><td>'+T.s2g3+'</td><td class="week">'+T.s2t+'</td><td style="color:#166534">'+avg2+'</td>'+'<td class="comb" style="color:#7c3aed">'+combAll+'</td></tr>'+
+    '</tbody></table></div>'+
+    '<div style="font-size:11px;color:#6b7280;margin-top:8px">※ 평균 = 해당 학기 교과군 주간시수 소계 ÷ 교사 수. 교사 수는 위 노란 패널에서 수정합니다.</div>'+
+    '<div style="text-align:right;margin-top:10px">연간(1+2학기) 예상 주간시수 총합 <span class="grand">'+grand+'</span></div>';
+}
+
+function renderStep5(){
+  const el=document.getElementById("panel-5");
+  let h='<div class="intro">📈 <b>5단계 · 연도별 예상 시수 변화 (한눈에)</b><br>'+
+    '2027 → 2028 → 2029학년도를 <b>학기별</b>로 비교합니다. 핵심은 <b>학기별 교사 1인당 평균 시수</b>이며, 1~4단계 조정이 그대로 반영됩니다.</div>';
+  h+=teacherEditorHTML();
+  h+='<div id="step5body"></div>';
+  h+='<div class="nav-row"><button class="btn ghost" data-act="prev" data-to="4">← 4단계</button><button class="btn green" data-act="finish">✓ 완료</button></div>';
+  el.innerHTML=h;
+  renderStep5Table();
+}
+function renderStep5Table(){
+  const box=document.getElementById("step5body"); if(!box) return;
+  const years=[2027,2028,2029];
+  const D={}; years.forEach(y=>D[y]=summaryData(y));
+  const groups=교과군_정렬순서.filter(g=>!excludedGroups.has(g) && years.some(y=>D[y][1][g]||D[y][2][g]));
+  const semTot=(y,sem,g)=> (D[y][sem][g]? (D[y][sem][g].total||0):0);
+  let rowsAvg='', rowsHr='', T={}, Ttch=0;
+  years.forEach(y=>T[y]={1:0,2:0});
+  groups.forEach(g=>{
+    const tc=teacherOf(g); Ttch+=tc;
+    let ra='<tr><td class="left">'+g+'</td><td style="color:#6b7280">'+(tc||'—')+'</td>';
+    let rh='<tr><td class="left">'+g+'</td><td style="color:#6b7280">'+(tc||'—')+'</td>';
+    years.forEach(y=>{
+      const t1=semTot(y,1,g), t2=semTot(y,2,g); T[y][1]+=t1; T[y][2]+=t2;
+      const a1=tc>0?(t1/tc).toFixed(1):'—', a2=tc>0?(t2/tc).toFixed(1):'—', ac=tc>0?((t1+t2)/(2*tc)).toFixed(1):'—';
+      ra+='<td class="s1" style="color:#1e40af;font-weight:700">'+a1+'</td><td class="s2" style="color:#166534;font-weight:700">'+a2+'</td><td class="comb" style="color:#7c3aed;font-weight:800">'+ac+'</td>';
+      rh+='<td class="s1 week">'+(t1||'')+'</td><td class="s2 week">'+(t2||'')+'</td>';
+    });
+    rowsAvg+=ra+'</tr>'; rowsHr+=rh+'</tr>';
+  });
+  let taAvg='<tr class="totrow"><td>합계</td><td>'+Ttch+'</td>', taHr='<tr class="totrow"><td>합계</td><td>'+Ttch+'</td>';
+  years.forEach(y=>{
+    const a1=Ttch>0?(T[y][1]/Ttch).toFixed(1):'—', a2=Ttch>0?(T[y][2]/Ttch).toFixed(1):'—', ac=Ttch>0?((T[y][1]+T[y][2])/(2*Ttch)).toFixed(1):'—';
+    taAvg+='<td style="color:#1e40af">'+a1+'</td><td style="color:#166534">'+a2+'</td><td class="comb" style="color:#7c3aed">'+ac+'</td>';
+    taHr+='<td class="week">'+T[y][1]+'</td><td class="week">'+T[y][2]+'</td>';
+  });
+  taAvg+='</tr>'; taHr+='</tr>';
+  const yheadAvg='<tr><th rowspan="2">교과군</th><th rowspan="2">교사수</th>'+years.map(y=>'<th colspan="3">'+y+'학년도</th>').join('')+'</tr>'+
+    '<tr>'+years.map(()=>'<th class="s1">1학기</th><th class="s2">2학기</th><th class="comb">1·2학기<br>평균</th>').join('')+'</tr>';
+  const yheadHr='<tr><th rowspan="2">교과군</th><th rowspan="2">교사수</th>'+years.map(y=>'<th colspan="2">'+y+'학년도</th>').join('')+'</tr>'+
+    '<tr>'+years.map(()=>'<th class="s1">1학기</th><th class="s2">2학기</th>').join('')+'</tr>';
+  const cards='<div class="yr-cards">'+years.map(y=>{
+    const a1=Ttch>0?(T[y][1]/Ttch).toFixed(1):'—', a2=Ttch>0?(T[y][2]/Ttch).toFixed(1):'—', ac=Ttch>0?((T[y][1]+T[y][2])/(2*Ttch)).toFixed(1):'—';
+    return '<div class="yr-card"><div class="yr-l">'+y+'학년도</div><div class="yr-v" style="font-size:17px">1학기 '+a1+' · 2학기 '+a2+'</div><div class="yr-s" style="color:#7c3aed;font-weight:700;font-size:13px">1·2학기 평균 '+ac+'</div></div>';
+  }).join('')+'</div>';
+  box.innerHTML=cards+
+    '<div class="summary"><h3>📌 학기별 교사 1인당 평균 시수 (연도 비교) — 핵심</h3><div style="overflow-x:auto"><table class="sumwide"><thead>'+yheadAvg+'</thead><tbody>'+rowsAvg+taAvg+'</tbody></table></div>'+
+    '<div style="font-size:11px;color:#6b7280;margin-top:8px">※ 평균 = 해당 <b>학기</b> 교과군 주간시수 ÷ 교사 수. 파랑=1학기, 초록=2학기, 보라=1·2학기 평균.</div></div>'+
+    '<div class="summary" style="margin-top:16px"><h3>📋 학기별 주간시수 합계 (연도 비교)</h3><div style="overflow-x:auto"><table class="sumwide"><thead>'+yheadHr+'</thead><tbody>'+rowsHr+taHr+'</tbody></table></div></div>';
+}
+
+// ================= 모달 =================
+let addCtx=null;
+function openAdd(ctx){
+  addCtx=ctx;
+  const gsel=document.getElementById("mGroup");
+  gsel.innerHTML=교과군_정렬순서.map(g=>'<option>'+g+'</option>').join("");
+  if(ctx.group) gsel.value=ctx.group;
+  document.getElementById("mName").value="";
+  document.getElementById("mType").value="진로 선택";
+  document.getElementById("mReq").value="선택군 택1";
+  document.getElementById("mHours").value=3;
+  document.getElementById("mClasses").value=1;
+  if(ctx.grade){ document.getElementById("mGrade").value=ctx.grade; }
+  document.getElementById("mModalGradeWrap")&&0;
+  document.getElementById("modalTitle").textContent = ctx.year ? (ctx.year+"학년도 "+ctx.grade+"학년 과목 추가") : "과목 추가 ("+ (ctx.group||"") +")";
+  document.getElementById("modalBg").classList.add("open");
+}
+function closeAdd(){ document.getElementById("modalBg").classList.remove("open"); addCtx=null; }
+function confirmAdd(){
+  const name=document.getElementById("mName").value.trim(); if(!name){ alert("과목명을 입력하세요."); return; }
+  const grade=Number(document.getElementById("mGrade").value);
+  const sem=Number(document.getElementById("mSem").value);
+  const obj={ 입학년도:"", 교과군:document.getElementById("mGroup").value, 과목명:name,
+    과목유형:document.getElementById("mType").value, 이수구분:document.getElementById("mReq").value.trim()||"선택군 택1",
+    학년:grade, 학기:sem, 주당시수:Number(document.getElementById("mHours").value)||0,
+    예상개설반:Number(document.getElementById("mClasses").value)||0, id:uid(), 제외:false };
+  let target;
+  if(addCtx.year){ target=cohortSource(addCtx.year, grade); }
+  else { target=subjects2027; } // step1
+  obj.입학년도 = (target===mutable2025)?"2025":(target===mutable2026)?"2026":"2027";
+  target.push(obj); saveState(); closeAdd(); renderCurrentStep();
+}
+
+// ================= 2027 입학생 편제표 (기준) =================
+function goBase(){
+  viewBase=true;
+  document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+  document.getElementById("panel-base").classList.add("active");
+  document.querySelectorAll(".step-chip").forEach(c=>c.classList.remove("active"));
+  document.getElementById("baseBtn").classList.add("active");
+  renderBase();
+  window.scrollTo(0,0);
+}
+function renderBase(){
+  const el=document.getElementById("panel-base");
+  const allGroups=교과군_정렬순서.filter(g=>subjects2027.some(s=>s.교과군===g));
+  if(baseViewGroups===null) baseViewGroups=new Set(allGroups);
+  const sorted=[...subjects2027].filter(s=>baseViewGroups.has(s.교과군)).sort((a,b)=>{
+    const g=cmpGroup(a.교과군,b.교과군); if(g) return g;
+    if(a.학년!==b.학년) return a.학년-b.학년;
+    if(a.학기!==b.학기) return a.학기-b.학기;
+    const ad=a.이수구분==="지정"?0:1, bd=b.이수구분==="지정"?0:1; if(ad!==bd) return ad-bd;
+    return a.과목명.localeCompare(b.과목명);
+  });
+  let h='<div class="intro">📋 <b>2027학년도 입학생 편제표 (모든 과목의 기준)</b><br>'+
+    '여기서 과목·주당시수·개설반·이수구분을 정하면 <b>1단계 과목 선택</b>과 <b>2027~2029학년도 예상 시수</b>에 그대로 반영됩니다. '+
+    '오른쪽에 <b>현재 선택 인원</b>도 함께 표시됩니다. '+
+    '<span style="color:#6b7280">(2027학년도 2·3학년은 이미 입학한 학생들의 과정이라 별도이며 2~4단계에서 조정합니다.)</span> '+
+    '<span class="reset-link" id="resetLink1">↻ 전체 초기화</span></div>';
+  h+='<div class="vfilter"><span class="lbl">👁 볼 교과군:</span>'+
+     '<button class="btn ghost sm" data-act="baseviewall">전체 선택</button>'+
+     '<button class="btn ghost sm" data-act="baseviewnone">전체 해제</button>'+
+     allGroups.map(g=>'<span class="vchip '+(baseViewGroups.has(g)?'on':'')+'" data-act="baseview" data-group="'+escapeHtml(g)+'">'+g+'</span>').join('')+'</div>';
+  h+='<div class="grade-card"><div class="card-head"><h3>편제표 <span class="sub">'+sorted.length+' / '+subjects2027.length+'과목 표시 · 각 칸을 눌러 수정</span></h3>'+
+     '<button class="btn ghost sm" data-act="add">+ 과목 추가</button></div><div style="overflow-x:auto"><table class="curri-edit"><thead><tr>'+
+     '<th>교과군</th><th>과목명</th><th>유형</th><th>이수구분</th><th>학년</th><th>학기</th><th>주당</th><th>개설반</th><th>주간</th><th>선택인원</th><th>삭제</th></tr></thead><tbody>';
+  sorted.forEach(s=>{
+    const c=choiceOf(s);
+    h+='<tr>'+
+      '<td><select data-id="'+s.id+'" data-field="교과군">'+교과군_정렬순서.map(g=>'<option '+(g===s.교과군?'selected':'')+'>'+g+'</option>').join('')+'</select></td>'+
+      '<td><input type="text" data-id="'+s.id+'" data-field="과목명" value="'+escapeHtml(s.과목명)+'" style="width:130px;text-align:left"></td>'+
+      '<td><select data-id="'+s.id+'" data-field="과목유형">'+['공통 과목','일반 선택','진로 선택','융합 선택'].map(t=>'<option '+(t===s.과목유형?'selected':'')+'>'+t+'</option>').join('')+'</select></td>'+
+      '<td><input type="text" data-id="'+s.id+'" data-field="이수구분" value="'+escapeHtml(s.이수구분)+'" style="width:92px;font-size:11px"></td>'+
+      '<td><select data-id="'+s.id+'" data-field="학년">'+[1,2,3].map(g=>'<option '+(g===s.학년?'selected':'')+'>'+g+'</option>').join('')+'</select></td>'+
+      '<td><select data-id="'+s.id+'" data-field="학기">'+[1,2].map(g=>'<option '+(g===s.학기?'selected':'')+'>'+g+'</option>').join('')+'</select></td>'+
+      '<td><input type="number" data-id="'+s.id+'" data-field="주당시수" value="'+s.주당시수+'" min="0"></td>'+
+      '<td><input type="number" data-id="'+s.id+'" data-field="예상개설반" value="'+s.예상개설반+'" min="0"></td>'+
+      '<td class="week" data-week="'+s.id+'">'+(s.주당시수*s.예상개설반)+'</td>'+
+      '<td>'+(c==null?'<span style="color:#cbd5e1">—</span>':'<span class="choice-num">'+c+'명</span>')+'</td>'+
+      '<td><button class="btn-del" data-act="del" data-id="'+s.id+'">삭제</button></td></tr>';
+  });
+  h+='</tbody></table></div></div>';
+  h+='<div class="nav-row"><span></span><button class="btn green" data-act="prev" data-to="1">1단계: 과목 선택으로 →</button></div>';
+  el.innerHTML=h;
+}
+
+// ================= 네비게이션 =================
+let currentStep=1, viewBase=false, baseViewGroups=null;
+function goStep(n){
+  viewBase=false; currentStep=n;
+  document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+  document.getElementById("panel-"+n).classList.add("active");
+  const _bb=document.getElementById("baseBtn"); if(_bb) _bb.classList.remove("active");
+  document.querySelectorAll(".step-chip").forEach(c=>{
+    const s=Number(c.dataset.step);
+    c.classList.toggle("active", s===n);
+    c.classList.toggle("done", s<n || s<=completedStep);
+  });
+  if(n===1) renderStep1(); else if(n===5) renderStep5(); else renderYear(n);
+  window.scrollTo(0,0);
+}
+function renderCurrentStep(){ if(viewBase) return renderBase(); if(currentStep===1) renderStep1(); else if(currentStep===5) renderStep5(); else renderYear(currentStep); }
+function markDone(n){ if(n>completedStep){ completedStep=n; saveState(); } }
+
+// ================= 이벤트 =================
+document.getElementById("stepper").addEventListener("click",e=>{
+  const chip=e.target.closest(".step-chip"); if(!chip) return;
+  goStep(Number(chip.dataset.step));
+});
+document.querySelector("main").addEventListener("click",e=>{
+  const b=e.target.closest("[data-act]"); if(!b) return;
+  const act=b.dataset.act;
+  if(act==="grouptile"){ const g=b.dataset.group; if(excludedGroups.has(g)) excludedGroups.delete(g); else excludedGroups.add(g); saveState(); renderStep1(); }
+  else if(act==="viewgroup"){ openView(b.dataset.group); }
+  else if(act==="selectall"){ excludedGroups=new Set(); saveState(); renderStep1(); }
+  else if(act==="deselectall"){ const allG=교과군_정렬순서.filter(g=>[mutable2025,mutable2026,subjects2027].some(a=>a.some(s=>s.교과군===g))); excludedGroups=new Set(allG); saveState(); renderStep1(); }
+  else if(act==="baseview"){ const g=b.dataset.group; if(baseViewGroups.has(g)) baseViewGroups.delete(g); else baseViewGroups.add(g); renderBase(); }
+  else if(act==="baseviewall"){ baseViewGroups=new Set(교과군_정렬순서.filter(g=>subjects2027.some(s=>s.교과군===g))); renderBase(); }
+  else if(act==="baseviewnone"){ baseViewGroups=new Set(); renderBase(); }
+  else if(act==="toggle"){ const o=findById(b.dataset.id); if(o){ o.제외=!b.checked; saveState(); renderStep1(); } }
+  else if(act==="del"){ if(confirm("이 과목을 삭제할까요?")){ deleteById(b.dataset.id); saveState(); renderCurrentStep(); } }
+  else if(act==="add"){ openAdd({group:b.dataset.group, year:b.dataset.year?Number(b.dataset.year):null, grade:b.dataset.grade?Number(b.dataset.grade):null}); }
+  else if(act==="recalc"){ const v=Number(document.getElementById("divInput").value); if(v>0){ classDivisor=v; applyChoiceClasses(mutable2025); applyChoiceClasses(mutable2026); applyChoiceClasses(subjects2027); saveState(); renderCurrentStep(); } }
+  else if(act==="next"){ markDone(currentStep); goStep(Number(b.dataset.to)); }
+  else if(act==="prev"){ goStep(Number(b.dataset.to)); }
+  else if(act==="finish"){ markDone(5); goStep(5); alert("완료! 2027~2029학년도 예상 시수와 연도별 변화를 모두 확인했습니다."); }
+  else if(act==="resetx"){ resetAll(); }
+});
+document.querySelector("main").addEventListener("input",e=>{
+  const el=e.target;
+  if(el.dataset.teacher!==undefined){ teacherCounts[el.dataset.teacher]=Number(el.value)||0; saveState(); if(currentStep===5) renderStep5Table(); else renderSummary(currentStep, 2025+currentStep); return; }
+  if(!el.dataset.field||!el.dataset.id) return;
+  const o=findById(el.dataset.id); if(!o) return;
+  const f=el.dataset.field;
+  if(f==="주당시수"||f==="예상개설반"){
+    o[f]=Number(el.value)||0;
+    const wk=document.querySelector('[data-week="'+o.id+'"]'); if(wk) wk.textContent=o.주당시수*o.예상개설반;
+    if(!viewBase){ if(currentStep===5) renderStep5Table(); else if(currentStep>=2&&currentStep<=4) renderSummary(currentStep, 2025+currentStep); }
+  } else { o[f]=el.value; }   // 과목명·이수구분 등 텍스트
+  saveState();
+});
+document.querySelector("main").addEventListener("change",e=>{
+  const el=e.target; if(!el.dataset.field||!el.dataset.id) return;
+  const f=el.dataset.field; if(f!=="과목유형"&&f!=="학년"&&f!=="학기"&&f!=="교과군") return;
+  const o=findById(el.dataset.id); if(!o) return;
+  o[f]=(f==="학년"||f==="학기")?Number(el.value):el.value;
+  saveState();
+  if(viewBase) renderBase();
+});
+document.addEventListener("click",e=>{ if(e.target.id==="resetLink1") resetAll(); });
+document.getElementById("baseBtn").addEventListener("click",goBase);
+document.getElementById("pdfBtn").addEventListener("click",()=>window.print());
+document.getElementById("exportBtn").addEventListener("click",exportState);
+document.getElementById("importBtn").addEventListener("click",()=>document.getElementById("importFile").click());
+document.getElementById("importFile").addEventListener("change",e=>{ if(e.target.files[0]) importState(e.target.files[0]); e.target.value=""; });
+document.getElementById("mCancel").addEventListener("click",closeAdd);
+document.getElementById("mConfirm").addEventListener("click",confirmAdd);
+document.getElementById("modalBg").addEventListener("click",e=>{ if(e.target.id==="modalBg") closeAdd(); });
+
+function openView(g){
+  const subs=subjects2027.filter(s=>s.교과군===g).sort(sortSubs);
+  document.getElementById("viewTitle").textContent=g+" — 과목 목록";
+  let h='';
+  [1,2,3].forEach(gr=>{ [1,2].forEach(sm=>{
+    const part=subs.filter(s=>s.학년===gr && s.학기===sm);
+    if(part.length===0) return;
+    h+='<div class="vg-head">'+gr+'학년 '+sm+'학기</div>';
+    [...new Set(part.map(s=>s.이수구분))].forEach(req=>{
+      h+='<div class="vg-req">'+escapeHtml(req)+'</div><ul class="vg-list">';
+      part.filter(s=>s.이수구분===req).forEach(s=>{ const c=choiceOf(s);
+        h+='<li>'+escapeHtml(s.과목명)+' <span class="req">'+s.과목유형.substring(0,2)+'</span>'+
+           (c!=null?' <span class="choice-num">'+c+'명</span>':'')+'</li>'; });
+      h+='</ul>';
+    });
+  });});
+  if(!h) h='<p style="color:#9ca3af">과목이 없습니다.</p>';
+  document.getElementById("viewBody").innerHTML=h;
+  document.getElementById("viewBg").classList.add("open");
+}
+function closeView(){ document.getElementById("viewBg").classList.remove("open"); }
+document.getElementById("viewClose").addEventListener("click",closeView);
+document.getElementById("viewBg").addEventListener("click",e=>{ if(e.target.id==="viewBg") closeView(); });
+
+// ================= 선택군 툴팁 =================
+function arrayOf(id){ for(const arr of [mutable2025,mutable2026,subjects2027]){ if(arr.some(s=>s.id===id)) return arr; } return null; }
+function reqHtml(s){ return isElective(s)
+  ? '<span class="req selgrp" data-tipid="'+s.id+'">'+escapeHtml(s.이수구분)+'</span>'
+  : '<span class="req">'+escapeHtml(s.이수구분)+'</span>'; }
+function siblingsTip(id){
+  const o=findById(id); if(!o||!isElective(o)) return '';
+  const arr=arrayOf(id); if(!arr) return '';
+  const sib=arr.filter(x=>x.학년===o.학년 && x.학기===o.학기 && x.이수구분===o.이수구분)
+    .sort((a,b)=>{ const g=cmpGroup(a.교과군,b.교과군); return g||a.과목명.localeCompare(b.과목명); });
+  if(!sib.length) return '';
+  const rows=sib.map(x=>{ const c=choiceOf(x);
+    return '<span class="tip-row"><span><span class="grp">['+escapeHtml(x.교과군)+']</span>'+escapeHtml(x.과목명)+'</span>'+
+           '<span class="hrs">'+(c==null?'—':c+'명')+' · '+x.주당시수+'×'+x.예상개설반+'반</span></span>'; }).join('');
+  return '<span class="tip-title">'+escapeHtml(o.이수구분)+' · 선택 대상 '+sib.length+'과목</span>'+rows;
+}
+const _wtip=document.getElementById("wizTip");
+function showTip(anchor, html){
+  _wtip.innerHTML=html; _wtip.style.display="block";
+  const r=anchor.getBoundingClientRect(), tw=_wtip.offsetWidth, th=_wtip.offsetHeight, vw=innerWidth, vh=innerHeight, gap=8;
+  const top=(vh-r.bottom>=th+gap||vh-r.bottom>=r.top)?r.bottom+gap:r.top-th-gap;
+  const left=Math.max(8, Math.min(vw-tw-8, r.left+r.width/2-tw/2));
+  _wtip.style.top=top+"px"; _wtip.style.left=left+"px";
+}
+function hideTip(){ _wtip.style.display="none"; }
+document.addEventListener("mouseover",e=>{ const el=e.target.closest(".selgrp"); if(!el) return; const html=siblingsTip(el.dataset.tipid); if(html) showTip(el,html); });
+document.addEventListener("mouseout",e=>{ const el=e.target.closest(".selgrp"); if(el && !el.contains(e.relatedTarget)) hideTip(); });
+
+// ================= 시작 =================
+loadState();
+goStep(1);
+</script>
+</body>
+</html>
