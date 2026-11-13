@@ -1032,6 +1032,51 @@ body {
   border-top: none;
 }
 
+/* ===== 편제표 디자인 통일: 학생선택 영역을 학교지정 영역과 같은 글씨·정렬로 ===== */
+.select-group-wrap {
+  border-left: none;
+  margin: 0;
+  background: transparent;
+  box-shadow: inset 3px 0 0 var(--gold);
+  border-top: 1px solid rgba(199,154,58,0.55);
+}
+.select-group-wrap::before { display: none; }
+.select-group-wrap.spans-grid > .curr-cell.section {
+  background: var(--bg); font-weight: 600; color: var(--navy); font-size: 10.5px;
+}
+.select-group-wrap.spans-grid > .curr-cell.group {
+  background: var(--bg); font-weight: 600; color: var(--navy); font-size: 11px;
+}
+.select-group-wrap.spans-grid > .curr-cell.subjects {
+  justify-content: flex-start;
+  padding-left: 8px;
+  text-align: left;
+  font-weight: 500;
+  color: var(--navy);
+  line-height: 1.4;
+}
+.select-group-wrap.spans-grid > .curr-cell.spans-all.credit-num {
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  background: rgba(15,32,66,0.04);
+}
+.select-group-wrap.spans-grid > .curr-cell.op-credits.spans-all {
+  background: rgba(199,154,58,0.06);
+  font-size: 11px;
+  line-height: 1.35;
+}
+.select-group-wrap.spans-grid > .curr-cell.op-credits.spans-all .op-credit-main {
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.select-group-wrap.spans-grid > .curr-cell.op-credits.spans-all .op-select-info b {
+  font-size: 9.5px;
+}
+
 /* 합계 행 */
 .curr-summary-row {
   display: grid;
@@ -3225,7 +3270,9 @@ function renderCurriculumTable(data) {
         if (c === null || c === undefined) {
           html += `<div class="curr-cell empty spans-all" style="grid-row:1/span ${rowCount};grid-column:${col}">·</div>`;
         } else {
-          html += `<div class="curr-cell credit-num spans-all" style="grid-row:1/span ${rowCount};grid-column:${col}">${c}</div>`;
+          // 택N이면 과목당 학점을 N번 세로로 표기 (택1 → 3, 택3 → 3·3·3)
+          const stack = Array.from({length: pickN}, () => `<span>${c}</span>`).join('');
+          html += `<div class="curr-cell credit-num spans-all" style="grid-row:1/span ${rowCount};grid-column:${col}">${stack}</div>`;
         }
       });
 
